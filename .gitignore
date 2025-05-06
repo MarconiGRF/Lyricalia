@@ -1,0 +1,4 @@
+.DS_Store
+android/.idea
+android/.gradle
+api/.swiftpm
