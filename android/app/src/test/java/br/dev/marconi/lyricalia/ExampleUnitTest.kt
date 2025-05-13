@@ -1,4 +1,4 @@
-package com.example.lyricalia
+package br.dev.marconi.lyricalia
 
 import org.junit.Test
 
