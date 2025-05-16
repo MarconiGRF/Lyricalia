@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/lyWhite"
-    tools:context=".MainActivity">
+    tools:context=".main_activity.MainActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/safeZone"
@@ -65,13 +65,14 @@
             app:layout_constraintVertical_bias="0.05" />
 
         <Button
+            android:id="@+id/submitUserButton"
             android:layout_width="200dp"
             android:layout_height="50dp"
             android:text="Entrar"
             android:fontFamily="@font/domine"
             android:textFontWeight="600"
-            android:textColor="@color/lyDarkerGray"
-            android:backgroundTint="@color/lyIndigo"
+            android:textColor="@color/Black"
+            android:backgroundTint="@color/lyGreen"
             android:layout_above="@id/lyricaliaTextBrand"
             app:layout_constraintStart_toStartOf="@id/safeZone"
             app:layout_constraintEnd_toEndOf="@id/safeZone"
