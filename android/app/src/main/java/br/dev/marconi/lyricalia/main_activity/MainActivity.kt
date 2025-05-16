@@ -1,12 +1,14 @@
 package br.dev.marconi.lyricalia.main_activity
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMainBinding
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,7 +28,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.submitUserButton.setOnClickListener {
-             Log.d("MAIN_ACT", binding.nameText.text.toString())
+            doLogin()
+        }
+    }
+
+    fun doLogin() {
+        lifecycleScope.launch {
+            binding.isLoading = true
+            delay(3000)
+            binding.isLoading = false
         }
     }
 }
