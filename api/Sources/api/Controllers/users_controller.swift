@@ -26,18 +26,24 @@ struct UsersController: RouteCollection {
     
     func getUser(req: Request) async throws -> User {
         let username = req.parameters.get("username")!
-        let user = try await User.query(on: req.db)
-            .filter(\.$username == username)
-            .first()
+        let user = try await findUser(req.db, username)
         
         return try user ?? { throw Abort(.notFound) }()
     }
 
-    func create(req: Request) async throws -> HTTPStatus {
-        let newUser = try req.content.decode(User.self)
-        try await newUser.save(on: req.db)
+    func create(req: Request) async throws -> User {
+        let user = try req.content.decode(User.self)
         
-        return .ok
+        let existingUser = try await findUser(req.db, user.username)
+        if existingUser != nil { return existingUser! }
+        
+        try await user.save(on: req.db)
+        
+        return user
+    }
+    
+    private func findUser(_ db: any Database, _ username: String) async throws -> User? {
+        try await User.query(on: db).filter(\.$username == username).first()
     }
 
 }
