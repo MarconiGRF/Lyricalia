@@ -1,15 +1,17 @@
-package br.dev.marconi.lyricalia.main_activity
+package br.dev.marconi.lyricalia.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMainBinding
-import kotlinx.coroutines.delay
+import br.dev.marconi.lyricalia.repositories.login.LoginSwiftRepository
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -30,13 +32,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.submitUserButton.setOnClickListener {
-            doLogin()
+            doLogin(binding.nameText.text.toString(), binding.usernameText.text.toString())
         }
 
         setupUsernameMask()
     }
 
     fun setupUsernameMask() {
+        Intent(this, MenuActivity::class.java)
         binding.usernameText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
@@ -55,10 +58,22 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun doLogin() {
+    fun showLongToast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+    }
+
+    fun doLogin(name: String, username: String) {
         lifecycleScope.launch {
             binding.isLoading = true
-            delay(3000)
+
+            try {
+                LoginSwiftRepository(
+                    binding.serverIp.text.toString()
+                ).createUser(name, username)
+            } catch (e: Exception) {
+                showLongToast("Erro ao entrar: " + e.message.toString())
+            }
+
             binding.isLoading = false
         }
     }

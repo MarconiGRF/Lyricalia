@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/lyWhite"
-        tools:context=".main_activity.MainActivity">
+        tools:context=".activities.MainActivity">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/safeZone"
@@ -74,6 +74,22 @@
                 app:layout_constraintStart_toStartOf="@id/safeZone"
                 app:layout_constraintEnd_toEndOf="@id/safeZone"
                 app:layout_constraintTop_toBottomOf="@id/nameText"
+                app:layout_constraintBottom_toBottomOf="@id/safeZone"
+                app:layout_constraintVertical_bias="0.05" />
+
+            <EditText
+                android:id="@+id/serverIp"
+                android:layout_width="250dp"
+                android:minHeight="48dp"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="text"
+                android:hint="@string/server_ip"
+                android:textColor="@color/lyGray"
+                android:fontFamily="@font/domine"
+                app:layout_constraintStart_toStartOf="@id/safeZone"
+                app:layout_constraintEnd_toEndOf="@id/safeZone"
+                app:layout_constraintTop_toBottomOf="@id/usernameText"
                 app:layout_constraintBottom_toBottomOf="@id/safeZone"
                 app:layout_constraintVertical_bias="0.05" />
 

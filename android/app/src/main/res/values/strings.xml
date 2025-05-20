@@ -3,4 +3,5 @@
     <string name="name">Nome</string>
     <string name="login">Entrar</string>
     <string name="user">\@usuário</string>
+    <string name="server_ip">IP do servidor</string>
 </resources>
