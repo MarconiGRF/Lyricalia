@@ -2,3 +2,4 @@
 android/.idea
 android/.gradle
 api/.swiftpm
+api/Sources/api/Persistence/*
