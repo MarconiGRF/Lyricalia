@@ -1,5 +1,6 @@
 package br.dev.marconi.lyricalia.activities
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
@@ -12,16 +13,31 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMainBinding
 import br.dev.marconi.lyricalia.repositories.login.LoginSwiftRepository
+import br.dev.marconi.lyricalia.repositories.login.models.User
+import br.dev.marconi.lyricalia.utils.StorageUtils
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
 
+        StorageUtils(applicationContext).retrieveUser()?.run {
+            navigateToMenu(this)
+        } ?: setupMainActivity()
+    }
+
+    private fun navigateToMenu(user: User) {
+        val intent = Intent(this, MenuActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            this.putExtra("user", user)
+        }
+        startActivity(intent)
+    }
+
+    private fun setupMainActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
 
@@ -38,8 +54,7 @@ class MainActivity : AppCompatActivity() {
         setupUsernameMask()
     }
 
-    fun setupUsernameMask() {
-        Intent(this, MenuActivity::class.java)
+    private fun setupUsernameMask() {
         binding.usernameText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
@@ -58,23 +73,26 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    fun showLongToast(text: String) {
+    private fun showLongToast(text: String) {
         Toast.makeText(this, text, Toast.LENGTH_LONG).show()
     }
 
-    fun doLogin(name: String, username: String) {
+    private fun doLogin(name: String, username: String) {
         lifecycleScope.launch {
             binding.isLoading = true
 
+            val user: User
             try {
-                LoginSwiftRepository(
-                    binding.serverIp.text.toString()
-                ).createUser(name, username)
+                user = LoginSwiftRepository(binding.serverIp.text.toString()).createUser(name, username)
+                StorageUtils(applicationContext).saveUser(user)
+                navigateToMenu(user)
+
+                binding.isLoading = false
             } catch (e: Exception) {
                 showLongToast("Erro ao entrar: " + e.message.toString())
+                binding.isLoading = false
             }
 
-            binding.isLoading = false
         }
     }
 }

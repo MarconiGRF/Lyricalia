@@ -24,7 +24,7 @@ class LoginSwiftRepository(
     }
     private val baseUrl = "http://$serverIp:8080"
 
-    override suspend fun createUser(name: String, username: String) {
+    override suspend fun createUser(name: String, username: String): User {
         var response: HttpResponse
         try {
             response = client.post("$baseUrl/users") {
@@ -35,7 +35,7 @@ class LoginSwiftRepository(
             throw e
         }
 
-        val body: User = response.body()
-        Log.d("IF722_P3_LYRICALIA", body.toString())
+        return response.body()
+//        Log.d("IF722_P3_LYRICALIA", body.toString())
     }
 }

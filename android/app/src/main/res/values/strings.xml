@@ -4,4 +4,7 @@
     <string name="login">Entrar</string>
     <string name="user">\@usuário</string>
     <string name="server_ip">IP do servidor</string>
+    <string name="logout">
+        <u>sair</u>
+    </string>
 </resources>

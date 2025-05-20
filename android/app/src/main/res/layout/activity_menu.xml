@@ -40,7 +40,6 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:textColor="@color/lyDarkerGray"
-            android:text="Oi, $USER"
             android:fontFamily="@font/domine"
             android:textFontWeight="400"
             android:textSize="24sp"
@@ -50,6 +49,24 @@
             app:layout_constraintBottom_toBottomOf="@id/safeZone"
             app:layout_constraintVertical_bias="0.05"
             app:layout_constraintHorizontal_bias="0.05" />
+
+        <Button
+            android:id="@+id/logout_button"
+            android:minWidth="50dp"
+            android:layout_width="wrap_content"
+            android:minHeight="50dp"
+            android:layout_height="wrap_content"
+            android:text="@string/logout"
+            android:fontFamily="@font/domine"
+            android:textFontWeight="200"
+            android:textColor="@color/lyDarkerGray"
+            android:backgroundTint="@color/lyWhite"
+            android:layout_above="@id/lyricaliaTextBrand"
+            app:layout_constraintStart_toEndOf="@id/lyricaliaTextBrand"
+            app:layout_constraintEnd_toEndOf="@id/safeZone"
+            app:layout_constraintTop_toTopOf="@id/lyricaliaTextBrand"
+            app:layout_constraintBottom_toBottomOf="@id/lyricaliaTextBrand"
+            app:layout_constraintHorizontal_bias="1" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
