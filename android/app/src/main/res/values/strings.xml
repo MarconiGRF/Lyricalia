@@ -7,4 +7,6 @@
     <string name="logout">
         <u>sair</u>
     </string>
+    <string name="connect">Conectar</string>
+    <string name="spotifyHint">$USER, conecte com sua biblioteca do Spotify para continuar</string>
 </resources>
