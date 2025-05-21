@@ -1,5 +1,6 @@
 package br.dev.marconi.lyricalia.activities
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -51,7 +52,14 @@ class MainActivity : AppCompatActivity() {
             doLogin(binding.nameText.text.toString(), binding.usernameText.text.toString())
         }
 
+        setupServerIp()
         setupUsernameMask()
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun setupServerIp() {
+        //TODO: Add server config storage to pass to other views
+        binding.serverIp.setText("10.0.2.2")
     }
 
     private fun setupUsernameMask() {
