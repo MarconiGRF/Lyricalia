@@ -1,18 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="isLoadingSpotify"
+            type="boolean" />
+    </data>
+
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/menu"
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:weightSum="1"
         android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:background="@color/lyWhite"
         android:padding="10dp"
-        tools:context=".activities.MenuActivity"
-        android:clipToPadding="false">
+        android:clipToPadding="false"
+        tools:context=".activities.SpotifyLinkActivity">
+
+        <ProgressBar
+            android:id="@+id/loadingSpinner"
+            android:minWidth="50dp"
+            android:layout_width="wrap_content"
+            android:minHeight="50dp"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/lyricaliaTextBrand"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:visibility="@{isLoadingSpotify ? View.VISIBLE : View.GONE}" />
 
         <TextView
             android:id="@+id/lyricaliaTextBrand"
@@ -30,6 +53,7 @@
 
         <ImageButton
             android:id="@+id/logout_button"
+            android:contentDescription="@string/accessibility_logout_button"
             android:minWidth="50dp"
             android:layout_width="wrap_content"
             android:minHeight="50dp"
@@ -62,35 +86,38 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="0" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/scrollableView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+        <TextView
+            android:id="@+id/spotifyHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/domine"
+            android:paddingHorizontal="25dp"
+            android:text="@string/spotifyHint"
+            android:textAlignment="center"
+            android:textColor="@color/lyDarkerGray"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toTopOf="@+id/spotify_link"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1"
+            android:layout_marginBottom="5dp"/>
+
+        <Button
+            android:id="@+id/spotify_link"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/lyGreen"
+            android:fontFamily="@font/domine"
+            android:minWidth="50dp"
+            android:minHeight="50dp"
+            android:text="@string/connect"
+            android:textColor="@color/lyDarkerGray"
+            android:textFontWeight="200"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider"
-            app:layout_constraintVertical_bias="0"
-            android:layout_marginTop="10dp"
-            android:paddingHorizontal="10dp"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/greeting"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="@font/domine"
-                android:paddingEnd="48dp"
-                android:textColor="@color/lyDarkerGray"
-                android:textSize="24sp"
-                android:text="@string/placeholder_greeting"
-                android:layout_marginTop="10dp"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintVertical_bias="0"
-                app:layout_constraintHorizontal_bias="0" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -1,22 +1,31 @@
 package br.dev.marconi.lyricalia.activities
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
+import android.provider.AlarmClock
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMenuBinding
 import br.dev.marconi.lyricalia.repositories.login.models.User
+import br.dev.marconi.lyricalia.utils.NavigationUtils
+import br.dev.marconi.lyricalia.utils.NotificationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MenuActivity : AppCompatActivity() {
@@ -40,16 +49,49 @@ class MenuActivity : AppCompatActivity() {
 
     private var currentGreeting = greetingPhrases.random()
 
+    override fun onStart() {
+        super.onStart()
+
+        val user = intent.getParcelableExtra("user", User::class.java)!!
+        user.spotifyUserId?.run {
+            setupGreeting(user)
+            setupLogoutButton()
+        } ?: navigateToSpotifyLink(user)
+    }
+
+    override fun onStop() {
+        super.onStop()
+    }
+
+    override fun onPause() {
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMenuBinding.inflate(layoutInflater)
-        val user = intent.getParcelableExtra("user", User::class.java)
 
-        setupMenuActivity(user!!)
+        binding = ActivityMenuBinding.inflate(layoutInflater)
+        setupMenuActivity()
+    }
+
+    private fun navigateToSpotifyLink(user: User) {
+        val intent = Intent(this, SpotifyLinkActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            this.putExtra("user", user)
+        }
+        startActivity(intent)
     }
 
     @SuppressLint("SetTextI18n")
-    private fun setupMenuActivity(user: User) {
+    private fun setupMenuActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
 
@@ -57,37 +99,6 @@ class MenuActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
-        }
-
-        setupLogoutButton()
-        user.spotifyUserId?.run {
-            setupGreeting(user)
-        } ?: setupSpotifyPrompt(user)
-
-    }
-
-    fun setupSpotifyPrompt(user: User) {
-        val firstName = user.name.split(" ").first()
-        val hint = "$firstName, conecte com sua biblioteca do Spotify para continuar"
-        binding.spotifyHint.text = SpannableString(hint).also {
-            it.setSpan(
-                StyleSpan(Typeface.BOLD),
-                0,
-                firstName.length,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-
-        binding.spotifyLink.setOnClickListener {
-            linkToSpotify(user)
-        }
-    }
-
-    fun linkToSpotify(user: User) {
-        lifecycleScope.launch {
-            binding.isLoadingSpotify = true
-            delay(3000)
-            binding.isLoadingSpotify = false
         }
     }
 
@@ -124,13 +135,6 @@ class MenuActivity : AppCompatActivity() {
 
     private fun logout() {
         StorageUtils(applicationContext).deleteUser()
-        navigateToLogin()
-    }
-
-    private fun navigateToLogin() {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        startActivity(intent)
+        NavigationUtils.navigateToLogin(this)
     }
 }

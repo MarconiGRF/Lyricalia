@@ -9,4 +9,6 @@
     </string>
     <string name="connect">Conectar</string>
     <string name="spotifyHint">$USER, conecte com sua biblioteca do Spotify para continuar</string>
+    <string name="accessibility_logout_button">Logout button</string>
+    <string name="placeholder_greeting">Oi, $USER!</string>
 </resources>
