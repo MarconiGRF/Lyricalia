@@ -29,15 +29,24 @@ class SpotifyLinkActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySpotifyLinkBinding.inflate(layoutInflater)
 
-        setupLogoutButton()
-
+        Log.d("IF1001_P3_LYRICALIA", "onCreate called on Menu")
         setupSpotifyLinkActivity()
+        setupLogoutButton()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d("IF1001_P3_LYRICALIA", "onStart called on Menu")
+
+        StorageUtils(this).retrieveUser()?.run {
+            setupSpotifyPrompt(this)
+        } ?: { Log.d("IF1001_P3_LYRICALIA", "no user, returning to login"); NavigationUtils.navigateToLogin(this) }
     }
 
     private fun setupSpotifyLinkActivity() {
         enableEdgeToEdge()
-        setContentView(R.layout.activity_spotify_link)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.spotifyLink) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -45,6 +54,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
     }
 
     fun setupSpotifyPrompt(user: User) {
+        Log.d("IF1001_P3_LYRICALIA", "setting up spotify prompt")
         val firstName = user.name.split(" ").first()
         val hint = "$firstName, conecte com sua biblioteca do Spotify para continuar"
         binding.spotifyHint.text = SpannableString(hint).also {
@@ -56,7 +66,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
             )
         }
 
-        binding.spotifyLink.setOnClickListener {
+        binding.linkButton.setOnClickListener {
             linkToSpotify()
         }
     }
@@ -65,6 +75,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
         lifecycleScope.launch {
             binding.isLoadingSpotify = true
 
+            Log.d("IF1001_P3_LYRICALIA", "LINK SPOTIFY CLICKED")
             setupNotifications()
 
             binding.isLoadingSpotify = false
@@ -90,6 +101,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
 
     fun setupLogoutButton() {
         binding.logoutButton.setOnClickListener {
+            Log.d("IF1001_P3_LYRICALIA", "LOGOOOOOOOOOOOUUUUUUUUUUTTTTTTTT")
             logout()
         }
     }

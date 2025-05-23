@@ -1,35 +1,23 @@
 package br.dev.marconi.lyricalia.activities
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.NotificationManager
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
-import android.provider.AlarmClock
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMenuBinding
 import br.dev.marconi.lyricalia.repositories.login.models.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
-import br.dev.marconi.lyricalia.utils.NotificationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
-import kotlinx.coroutines.launch
 
 class MenuActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMenuBinding
 
     private var greetingPhrases = arrayOf(
@@ -94,7 +82,6 @@ class MenuActivity : AppCompatActivity() {
     private fun setupMenuActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
-
         ViewCompat.setOnApplyWindowInsetsListener(binding.menu) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)

@@ -1,7 +1,6 @@
 package br.dev.marconi.lyricalia.activities
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
@@ -15,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMainBinding
 import br.dev.marconi.lyricalia.repositories.login.LoginSwiftRepository
 import br.dev.marconi.lyricalia.repositories.login.models.User
+import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import kotlinx.coroutines.launch
 
@@ -25,17 +25,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
 
-        StorageUtils(applicationContext).retrieveUser()?.run {
-            navigateToMenu(this)
-        } ?: setupMainActivity()
+        navigateAccordingToUserState()
     }
 
-    private fun navigateToMenu(user: User) {
-        val intent = Intent(this, MenuActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            this.putExtra("user", user)
-        }
-        startActivity(intent)
+    private fun navigateAccordingToUserState() {
+        val user = StorageUtils(applicationContext).retrieveUser()
+        if (user != null) {
+            when {
+                user.spotifyToken != null -> NavigationUtils.navigateToMenu(this)
+                else                      -> NavigationUtils.navigateToSpotifyLink(this)
+            }
+        } else setupMainActivity()
     }
 
     private fun setupMainActivity() {
@@ -93,9 +93,9 @@ class MainActivity : AppCompatActivity() {
             try {
                 user = LoginSwiftRepository(binding.serverIp.text.toString()).createUser(name, username)
                 StorageUtils(applicationContext).saveUser(user)
-                navigateToMenu(user)
-
                 binding.isLoading = false
+
+                navigateAccordingToUserState()
             } catch (e: Exception) {
                 showLongToast("Erro ao entrar: " + e.message.toString())
                 binding.isLoading = false

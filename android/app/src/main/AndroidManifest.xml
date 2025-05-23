@@ -18,11 +18,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Lyricalia"
-        android:usesCleartextTraffic="true"
-        tools:targetApi="33">
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".activities.SpotifyLinkActivity"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".activities.MainActivity"
             android:exported="true">
