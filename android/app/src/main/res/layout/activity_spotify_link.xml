@@ -142,7 +142,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/divider"
-            android:background="@drawable/card_background">
+            android:background="@drawable/card_background"
+            android:visibility="@{showPermissionRationale ? View.VISIBLE : View.GONE}">
             <TextView
                 android:id="@+id/notification_permission_explanation_title"
                 android:text="@string/notification_permission_rationale_title"

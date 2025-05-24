@@ -11,6 +11,7 @@ import android.text.style.StyleSpan
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -26,14 +27,25 @@ import kotlinx.coroutines.launch
 
 class SpotifyLinkActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySpotifyLinkBinding
+    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySpotifyLinkBinding.inflate(layoutInflater)
 
-        Log.d("IF1001_P3_LYRICALIA", "onCreate called on Menu")
         setupSpotifyLinkActivity()
         setupLogoutButton()
+
+        requestPermissionLauncher = registerForActivityResult(
+            RequestPermission()
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                NotificationUtils.createSpotifyChannel(notificationManager)
+            } else {
+                Log.d("IF1001_P3_LYRICALIA", "Permission NOT granted for notifications")
+            }
+        }
     }
 
     override fun onStart() {
@@ -79,33 +91,30 @@ class SpotifyLinkActivity : AppCompatActivity() {
 
             Log.d("IF1001_P3_LYRICALIA", "LINK SPOTIFY CLICKED")
             setupNotifications()
-
-            binding.isLoadingSpotify = false
         }
     }
 
     private fun setupNotifications() {
-        val requestPermissionLauncher = registerForActivityResult(
-            RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                NotificationUtils.createLinkingNotificationChannel(notificationManager)
-            } else {
-                Log.d("IF1001_P3_LYRICALIA", "Permission NOT granted for notifications")
-            }
-        }
-
         when {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
                 Toast.makeText(this, "NOTIF PERM GRANTED", Toast.LENGTH_LONG).show()
             }
+            else -> {
+                binding.showPermissionRationale = true
+                binding.allowNotificationsButton.setOnClickListener {
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    //Launch Spotify browser
 
-            ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS) -> {
-//                binding.showPermissionRationale
+                    binding.isLoadingSpotify = false
+                }
+                binding.skipNotificationsButton.setOnClickListener {
+                    binding.showPermissionRationale = false
+                    //Launch Spotify browser
+
+
+                    binding.isLoadingSpotify = false
+                }
             }
-
-            else -> requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
