@@ -2,19 +2,21 @@ package br.dev.marconi.lyricalia.activities
 
 import android.Manifest
 import android.app.NotificationManager
+import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
-import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivitySpotifyLinkBinding
 import br.dev.marconi.lyricalia.repositories.login.models.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
@@ -94,9 +96,17 @@ class SpotifyLinkActivity : AppCompatActivity() {
             }
         }
 
-        requestPermissionLauncher.launch(
-            Manifest.permission.POST_NOTIFICATIONS
-        )
+        when {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
+                Toast.makeText(this, "NOTIF PERM GRANTED", Toast.LENGTH_LONG).show()
+            }
+
+            ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS) -> {
+//                binding.showPermissionRationale
+            }
+
+            else -> requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     fun setupLogoutButton() {

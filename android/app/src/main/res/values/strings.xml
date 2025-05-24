@@ -11,4 +11,8 @@
     <string name="spotifyHint">$USER, conecte com sua biblioteca do Spotify para continuar</string>
     <string name="accessibility_logout_button">Logout button</string>
     <string name="placeholder_greeting">Oi, $USER!</string>
+    <string name="notification_permission_rationale_title">Precisamos de permissões de notificações</string>
+    <string name="notification_permission_rationale_explanation">pra te avisar quando o processo de conectar com o Spotify estiver completo</string>
+    <string name="okay_confirm">Tudo bem</string>
+    <string name="later_dismiss">Mais tarde</string>
 </resources>

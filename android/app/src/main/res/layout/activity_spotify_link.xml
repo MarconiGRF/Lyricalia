@@ -6,6 +6,9 @@
         <variable
             name="isLoadingSpotify"
             type="boolean" />
+        <variable
+            name="showPermissionRationale"
+            type="boolean" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -130,7 +133,74 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="350dp"
+            android:layout_height="180dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider"
+            android:background="@drawable/card_background">
+            <TextView
+                android:id="@+id/notification_permission_explanation_title"
+                android:text="@string/notification_permission_rationale_title"
+                android:paddingHorizontal="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/domine"
+                android:textAlignment="center"
+                android:textFontWeight="600"
+                />
+            <TextView
+                android:id="@+id/notification_permission_explanation_text"
+                android:text="@string/notification_permission_rationale_explanation"
+                android:paddingHorizontal="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/notification_permission_explanation_title"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:fontFamily="@font/domine"
+                android:textAlignment="center"
+                android:textFontWeight="400"
+                />
+            <Button
+                android:id="@+id/allow_notifications_button"
+                android:paddingHorizontal="40dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/lyGreen"
+                android:fontFamily="@font/domine"
+                android:minWidth="50dp"
+                android:minHeight="50dp"
+                android:text="@string/okay_confirm"
+                android:textColor="@color/lyDarkerGray"
+                android:textFontWeight="200"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/notification_permission_explanation_text"
+                android:layout_marginTop="10dp"/>
+            <Button
+                android:id="@+id/skip_notifications_button"
+                android:paddingHorizontal="40dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/lyWhite"
+                android:fontFamily="@font/domine"
+                android:minWidth="50dp"
+                android:minHeight="50dp"
+                android:text="@string/later_dismiss"
+                android:textColor="@color/lyDarkerGray"
+                android:textFontWeight="200"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/allow_notifications_button" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
