@@ -40,11 +40,14 @@ class MenuActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        val user = intent.getParcelableExtra("user", User::class.java)!!
-        user.spotifyUserId?.run {
-            setupGreeting(user)
-            setupLogoutButton()
-        } ?: navigateToSpotifyLink(user)
+
+        val user = StorageUtils(this).retrieveUser()
+        if (user != null) {
+            user.spotifyUserId?.run {
+                setupGreeting(user)
+                setupLogoutButton()
+            } ?: NavigationUtils.navigateToSpotifyLink(this)
+        }
     }
 
     override fun onStop() {
@@ -68,14 +71,6 @@ class MenuActivity : AppCompatActivity() {
 
         binding = ActivityMenuBinding.inflate(layoutInflater)
         setupMenuActivity()
-    }
-
-    private fun navigateToSpotifyLink(user: User) {
-        val intent = Intent(this, SpotifyLinkActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            this.putExtra("user", user)
-        }
-        startActivity(intent)
     }
 
     @SuppressLint("SetTextI18n")

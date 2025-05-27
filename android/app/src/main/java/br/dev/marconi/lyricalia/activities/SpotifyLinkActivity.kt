@@ -9,43 +9,45 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivitySpotifyLinkBinding
 import br.dev.marconi.lyricalia.repositories.login.models.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.NotificationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
-import kotlinx.coroutines.launch
 
 class SpotifyLinkActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySpotifyLinkBinding
-    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var notificationManager: NotificationManager
+    private val requestPermissionLauncher = registerForActivityResult(RequestPermission()) { }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        binding.showPermissionRationale = false
+
+        if (grantResults[permissions.indexOf("android.permission.POST_NOTIFICATIONS")] == PackageManager.PERMISSION_GRANTED) {
+            NotificationUtils.notifySpotifyLinkStarted(notificationManager, this)
+        }
+
+        //Launch Spotify Browser
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         binding = ActivitySpotifyLinkBinding.inflate(layoutInflater)
 
         setupSpotifyLinkActivity()
         setupLogoutButton()
-
-        requestPermissionLauncher = registerForActivityResult(
-            RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                NotificationUtils.createSpotifyChannel(notificationManager)
-            } else {
-                Log.d("IF1001_P3_LYRICALIA", "Permission NOT granted for notifications")
-            }
-        }
     }
 
     override fun onStart() {
@@ -54,7 +56,10 @@ class SpotifyLinkActivity : AppCompatActivity() {
 
         StorageUtils(this).retrieveUser()?.run {
             setupSpotifyPrompt(this)
-        } ?: { Log.d("IF1001_P3_LYRICALIA", "no user, returning to login"); NavigationUtils.navigateToLogin(this) }
+        } ?: {
+            Log.d("IF1001_P3_LYRICALIA", "no user, returning to login");
+            NavigationUtils.navigateToLogin(this)
+        }
     }
 
     private fun setupSpotifyLinkActivity() {
@@ -81,46 +86,36 @@ class SpotifyLinkActivity : AppCompatActivity() {
         }
 
         binding.linkButton.setOnClickListener {
-            linkToSpotify()
-        }
-    }
-
-    private fun linkToSpotify() {
-        lifecycleScope.launch {
             binding.isLoadingSpotify = true
-
-            Log.d("IF1001_P3_LYRICALIA", "LINK SPOTIFY CLICKED")
-            setupNotifications()
+            checkNotificationPermission()
         }
     }
 
-    private fun setupNotifications() {
+    private fun checkNotificationPermission() {
         when {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
-                Toast.makeText(this, "NOTIF PERM GRANTED", Toast.LENGTH_LONG).show()
+                NotificationUtils.notifySpotifyLinkStarted(notificationManager, this)
+                // Launch Spotify browser
             }
             else -> {
+                setupPermissionRationaleButtons()
                 binding.showPermissionRationale = true
-                binding.allowNotificationsButton.setOnClickListener {
-                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    //Launch Spotify browser
-
-                    binding.isLoadingSpotify = false
-                }
-                binding.skipNotificationsButton.setOnClickListener {
-                    binding.showPermissionRationale = false
-                    //Launch Spotify browser
-
-
-                    binding.isLoadingSpotify = false
-                }
             }
+        }
+    }
+
+    fun setupPermissionRationaleButtons() {
+        binding.allowNotificationsButton.setOnClickListener {
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        binding.skipNotificationsButton.setOnClickListener {
+            binding.showPermissionRationale = false
+            // Launch Spotify Browser
         }
     }
 
     fun setupLogoutButton() {
         binding.logoutButton.setOnClickListener {
-            Log.d("IF1001_P3_LYRICALIA", "LOGOOOOOOOOOOOUUUUUUUUUUTTTTTTTT")
             logout()
         }
     }
