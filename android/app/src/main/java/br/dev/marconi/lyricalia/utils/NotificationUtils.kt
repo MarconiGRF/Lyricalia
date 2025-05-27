@@ -20,7 +20,7 @@ class NotificationUtils {
             val channel = NotificationChannel(
                 SPOTIFY_LINKING.CHANNEL_ID,
                 SPOTIFY_LINKING.NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).also {
                 it.description = SPOTIFY_LINKING.DESCRIPTION
                 it.enableVibration(true)
@@ -33,8 +33,10 @@ class NotificationUtils {
             createSpotifyChannel(notificationManager)
             val n = NotificationCompat.Builder(context, SPOTIFY_LINKING.CHANNEL_ID)
                 .setContentTitle("Conectando Spotify...")
-                .setContentText("estamos te esperando terminar de conectar, avisaremos quando terminar ou se o processo falhar :)")
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setStyle(NotificationCompat.BigTextStyle()
+                    .bigText("Estamos te esperando conectar seu Spotify, avisaremos quando isso acabar ou se o processo falhar"))
                 .setOngoing(true)
                 .build()
             notificationManager.notify(SPOTIFY_LINKING.PROCESS_STARTED.NOTIFICATION_ID, n)
