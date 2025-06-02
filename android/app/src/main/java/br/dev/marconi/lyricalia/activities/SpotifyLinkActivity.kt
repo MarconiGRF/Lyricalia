@@ -16,6 +16,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivitySpotifyLinkBinding
 import br.dev.marconi.lyricalia.repositories.login.models.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
@@ -23,13 +28,20 @@ import br.dev.marconi.lyricalia.utils.NotificationUtils
 import br.dev.marconi.lyricalia.utils.SpotifyUtils
 import br.dev.marconi.lyricalia.utils.SpotifyUtils.Companion.REQUEST_CODE
 import br.dev.marconi.lyricalia.utils.StorageUtils
+import br.dev.marconi.lyricalia.utils.managers.KeyStoreManager
+import br.dev.marconi.lyricalia.utils.managers.KeyStoreManager.Companion.DATA_STORE_KEY_ENCRYPTABLES
+import br.dev.marconi.lyricalia.utils.managers.KeyStoreManager.Companion.SPOTIFY_CLIENT_ID_KEY
+import br.dev.marconi.lyricalia.utils.managers.KeyStoreManager.Companion.SPOTIFY_CLIENT_SECRET_KEY
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
+import kotlinx.coroutines.launch
 
 class SpotifyLinkActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySpotifyLinkBinding
     private lateinit var notificationManager: NotificationManager
     private val requestPermissionLauncher = registerForActivityResult(RequestPermission()) { }
+
+    private val ds: DataStore<Preferences> by preferencesDataStore(name = DATA_STORE_KEY_ENCRYPTABLES)
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -57,6 +69,26 @@ class SpotifyLinkActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val ksMgrClient = KeyStoreManager(SPOTIFY_CLIENT_ID_KEY)
+        val ksMgrSecret = KeyStoreManager(SPOTIFY_CLIENT_SECRET_KEY)
+
+        val clientId = "\\"
+        val encryptedClientId = ksMgrClient.encrypt(clientId, SPOTIFY_CLIENT_ID_KEY)
+
+        val clientSecret = "//"
+        val encryptedSecret = ksMgrSecret.encrypt(clientSecret, SPOTIFY_CLIENT_SECRET_KEY)
+
+        lifecycleScope.launch {
+            KeyStoreManager.writeToPrefs(ds, stringPreferencesKey(SPOTIFY_CLIENT_ID_KEY), encryptedClientId)
+            KeyStoreManager.writeToPrefs(ds, stringPreferencesKey(SPOTIFY_CLIENT_SECRET_KEY), encryptedSecret)
+        }
+
+//        lifecycleScope.launch {
+//            val pref = KeyStoreManager.readPrefs(ds, stringPreferencesKey(SPOTIFY_CLIENT_ID_KEY_PREFS))
+//            Log.d("IF1001_P3_LYRICALIA", pref)
+//        }
+
+
         super.onCreate(savedInstanceState)
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         binding = ActivitySpotifyLinkBinding.inflate(layoutInflater)
