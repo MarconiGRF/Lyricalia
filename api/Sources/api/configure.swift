@@ -13,3 +13,15 @@ public func configure(_ app: Application) async throws {
     try await app.autoMigrate()
     try routes(app)
 }
+
+
+// extension Request {
+//     var userLibraryProcessorQueue: UserLibraryProcessorQueue? {
+//         get {
+//             self.storage[UserLibraryProcessorQueueKey.self]
+//         }
+//         set {
+//             self.storage[UserLibraryProcessorQueueKey.self] = newValue
+//         }
+//     }
+// }

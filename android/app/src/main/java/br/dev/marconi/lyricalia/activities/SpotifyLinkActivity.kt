@@ -156,7 +156,9 @@ class SpotifyLinkActivity : AppCompatActivity() {
             AuthorizationResponse.Type.CODE -> {
                 verifyAuthenticity(response.code)
 
-                importUserLibrary()
+                lifecycleScope.launch {
+                    SpotifyUtils.dispatchProcessUserLibrary(applicationContext)
+                }
 
                 NavigationUtils.navigateToMenu(applicationContext)
             }
@@ -171,10 +173,6 @@ class SpotifyLinkActivity : AppCompatActivity() {
                 Log.e("IF1001_P3_LYRICALIA", "Maybe the flow was cancelled?")
             }
         }
-    }
-
-    private fun importUserLibrary() {
-
     }
 
     private fun verifyAuthenticity(authorizationCode: String) {

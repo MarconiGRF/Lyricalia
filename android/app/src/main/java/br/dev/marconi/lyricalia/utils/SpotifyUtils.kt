@@ -70,5 +70,14 @@ class SpotifyUtils {
             val db = SpotifyCredentialsDatabase.getInstance(context)
             db.spotifyCredentialsDao().insert(credentials)
         }
+
+        suspend fun dispatchProcessUserLibrary(context: Context) {
+            val serverIp = StorageUtils(context).retrieveServerIp()
+            val user = StorageUtils(context).retrieveUser()
+            client.post("http://$serverIp:8080/spotify/library") {
+                contentType(ContentType.Application.Json)
+                setBody(user)
+            }
+        }
     }
 }

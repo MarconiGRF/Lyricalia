@@ -9,12 +9,38 @@ import Vapor
 struct SpotifyController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let spotifyRoutes = routes.grouped("spotify")
-        SpotifyAuthorizationRequest.getB64AuthString()
 
         spotifyRoutes.group("auth") { spotifyRoutes in
             spotifyRoutes.post(use: exchangeCode)
         }
+
+        spotifyRoutes.group("library") { spotifyRoutes in
+            spotifyRoutes.post(use: dispatchProcessUserLibrary)
+        }
     }
+
+    func dispatchProcessUserLibrary(req: Request) async throws -> Bool {
+        let user = try req.content.decode(User.self)
+        guard let userId = user.id else {
+            throw Abort(.badRequest, reason: "User ID is required to process the user's library")
+        }
+        guard let spotifyToken = user.spotifyToken else {
+            throw Abort(.badRequest, reason: "Spotify Token is required to process the user's library")
+        }
+
+        let queue = await UserLibraryProcessorQueue.shared
+        if (queue.alreadyExists(userId: userId)) {
+            throw Abort(.badRequest, reason: "User library already being processed")
+        }
+
+        print("appended jubilu")
+        let libStatus = LibraryProcessingStatus(100, userId, spotifyToken)
+        queue.append(libStatus)
+        UserLibraryProcessor(libStatus: libStatus).start()
+
+        return true
+    }
+
 
     func exchangeCode(req: Request) async throws -> SpotifyCredentials {
         let credentials = try req.content.decode(SpotifyCredentials.self)
