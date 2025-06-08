@@ -40,7 +40,6 @@ class LoginSwiftRepository : LoginRepository {
             throw e
         }
 
-        return response.body()
-//        Log.d("IF722_P3_LYRICALIA", body.toString())
+        return response.body<User>()
     }
 }

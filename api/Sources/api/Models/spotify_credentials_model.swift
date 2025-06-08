@@ -6,18 +6,16 @@ final class SpotifyCredentials: Content, @unchecked Sendable {
 
     var authorizationCode: String
 
-    var userId: String
-
     var accessToken: String?
 
     var refreshToken: String?
 
-    var expiresIn: UInt64?
+    var expiresIn: Int?
 
-    init(id: Int, authorizationCode: String, userId: String, refreshToken: String? = nil, expiresIn: Int) {
+    init(id: Int, authorizationCode: String, refreshToken: String? = nil, expiresIn: Int) {
         self.id = id
         self.authorizationCode = authorizationCode
-        self.userId = userId
         self.refreshToken = refreshToken
+        self.expiresIn = expiresIn
     }
 }

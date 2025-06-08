@@ -10,14 +10,17 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.datastore.core.Storage
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivitySpotifyLinkBinding
+import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsEntity
 import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.NotificationUtils
@@ -71,14 +74,15 @@ class SpotifyLinkActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
+        binding.isLoadingSpotify = true
         val user = StorageUtils(this).retrieveUser()
         if (user == null) {
             Log.d("IF1001_P3_LYRICALIA", "no user, returning to login");
             NavigationUtils.navigateToLogin(this)
             return
         }
-        currentUser = user
 
+        currentUser = user
         if (user.spotifyToken != null) {
             NavigationUtils.navigateToMenu(this)
             return
@@ -120,6 +124,8 @@ class SpotifyLinkActivity : AppCompatActivity() {
             binding.isLoadingSpotify = true
             checkNotificationPermission()
         }
+
+        binding.isLoadingSpotify = false
     }
 
     private fun checkNotificationPermission() {
@@ -148,8 +154,11 @@ class SpotifyLinkActivity : AppCompatActivity() {
     private fun handleSpotifyLoginResult(response: AuthorizationResponse) {
         when (response.type) {
             AuthorizationResponse.Type.CODE -> {
-                Log.d("IF1001_P3_LYRICALIA", "SUCCESS on Spotify authorization")
                 verifyAuthenticity(response.code)
+
+                importUserLibrary()
+
+                NavigationUtils.navigateToMenu(applicationContext)
             }
             AuthorizationResponse.Type.ERROR -> {
                 binding.spotifyHint.text = "Não conseguimos acessar sua biblioteca, quer tentar novamente?"
@@ -164,12 +173,23 @@ class SpotifyLinkActivity : AppCompatActivity() {
         }
     }
 
+    private fun importUserLibrary() {
+
+    }
+
     private fun verifyAuthenticity(authorizationCode: String) {
         try {
+            var credentials: SpotifyCredentialsEntity
             lifecycleScope.launch {
-                SpotifyUtils.exchangeAndSaveTokens(applicationContext, authorizationCode, currentUser)
+                credentials = SpotifyUtils.exchangeAndSaveTokens(
+                    applicationContext,
+                    authorizationCode
+                )
+                currentUser.spotifyToken = credentials.accessToken
+                StorageUtils(applicationContext).saveUser(currentUser)
             }
-        } catch (_: Exception) {
+        } catch (ex: Exception) {
+            Toast.makeText(this, "Erro ao autenticar: ${ex.message}", Toast.LENGTH_LONG).show()
             binding.spotifyHint.text = "Tivemos problemas ao falar com o Spotify, quer tentar novamente?"
             binding.isLoadingSpotify = false
         }

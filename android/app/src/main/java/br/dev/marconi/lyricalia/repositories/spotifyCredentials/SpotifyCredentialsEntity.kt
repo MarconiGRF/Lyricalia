@@ -9,7 +9,6 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "spotify_credentials")
 class SpotifyCredentialsEntity (
     @ColumnInfo(name = "authorization_code") val authorizationCode: String,
-    @ColumnInfo(name = "user_id") val userId: String,
     @ColumnInfo(name = "access_token") val accessToken: String? = null,
     @ColumnInfo(name = "refresh_token") val refreshToken: String? = null,
     @ColumnInfo(name = "expires_in") val expiresIn: Long? = null,

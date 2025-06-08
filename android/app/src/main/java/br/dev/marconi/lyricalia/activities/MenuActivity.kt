@@ -46,7 +46,7 @@ class MenuActivity : AppCompatActivity() {
 
         val user = StorageUtils(this).retrieveUser()
         if (user != null) {
-            user.spotifyUserId?.run {
+            user.spotifyToken?.run {
                 setupGreeting(user)
                 setupLogoutButton()
             } ?: NavigationUtils.navigateToSpotifyLink(this)

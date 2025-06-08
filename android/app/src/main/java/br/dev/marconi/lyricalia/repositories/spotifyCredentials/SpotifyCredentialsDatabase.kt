@@ -13,8 +13,8 @@ abstract class SpotifyCredentialsDatabase : RoomDatabase() {
         fun getInstance(context: Context): SpotifyCredentialsDatabase {
             return Room.databaseBuilder<SpotifyCredentialsDatabase>(
                 context,
-                SpotifyCredentialsDatabase::class.java, "lyric_db"
-            ).build()
+                SpotifyCredentialsDatabase::class.java, "spotify_credentials_db"
+            ).allowMainThreadQueries().build()
         }
     }
 }

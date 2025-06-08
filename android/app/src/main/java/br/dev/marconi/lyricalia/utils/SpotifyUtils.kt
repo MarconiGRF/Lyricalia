@@ -3,12 +3,15 @@ package br.dev.marconi.lyricalia.utils
 import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.room.Room
+import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsDatabase
 import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsEntity
 import br.dev.marconi.lyricalia.repositories.user.User
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.post
@@ -40,29 +43,32 @@ class SpotifyUtils {
             AuthorizationClient.openLoginActivity(activity, REQUEST_CODE, authorizationRequest.build())
         }
 
-        fun buildCredentials(authorizationCode: String, currentUser: User) = SpotifyCredentialsEntity(
+        fun buildCredentials(authorizationCode: String) = SpotifyCredentialsEntity(
             authorizationCode = authorizationCode,
-            userId = currentUser.id!!,
             accessToken = null,
         )
 
-        suspend fun exchangeAndSaveTokens(
-            context: Context,
-            authorizationCode: String,
-            currentUser: User
-        ) {
+        suspend fun exchangeAndSaveTokens(context: Context, authorizationCode: String): SpotifyCredentialsEntity {
             try {
                 val serverIp = StorageUtils(context).retrieveServerIp()
 
                 var response = client.post("http://$serverIp:8080/spotify/auth") {
                     contentType(ContentType.Application.Json)
-                    setBody(buildCredentials(authorizationCode, currentUser))
+                    setBody(buildCredentials(authorizationCode))
                 }
+                val body = response.body<SpotifyCredentialsEntity>()
+                saveCredentials(context, body)
 
+                return body
             } catch (ex: Exception) {
                 Log.e("IF1001_P3_LYRICALIA", "Failed to exchange tokens with spotify", ex)
                 throw ex
             }
+        }
+
+        fun saveCredentials(context: Context, credentials: SpotifyCredentialsEntity) {
+            val db = SpotifyCredentialsDatabase.getInstance(context)
+            db.spotifyCredentialsDao().insert(credentials)
         }
     }
 }
