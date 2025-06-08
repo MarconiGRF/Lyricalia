@@ -16,8 +16,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivitySpotifyLinkBinding
-import br.dev.marconi.lyricalia.repositories.login.models.User
+import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.NotificationUtils
 import br.dev.marconi.lyricalia.utils.SpotifyUtils
@@ -25,11 +26,13 @@ import br.dev.marconi.lyricalia.utils.SpotifyUtils.Companion.REQUEST_CODE
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
+import kotlinx.coroutines.launch
 
 class SpotifyLinkActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySpotifyLinkBinding
     private lateinit var notificationManager: NotificationManager
     private val requestPermissionLauncher = registerForActivityResult(RequestPermission()) { }
+    private lateinit var currentUser: User
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -74,6 +77,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
             NavigationUtils.navigateToLogin(this)
             return
         }
+        currentUser = user
 
         if (user.spotifyToken != null) {
             NavigationUtils.navigateToMenu(this)
@@ -87,7 +91,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
             return
         }
 
-        setupSpotifyPrompt(user)
+        setupSpotifyPrompt()
     }
 
     private fun setupSpotifyLinkActivity() {
@@ -100,8 +104,8 @@ class SpotifyLinkActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSpotifyPrompt(user: User) {
-        val firstName = user.name.split(" ").first()
+    private fun setupSpotifyPrompt() {
+        val firstName = currentUser.name.split(" ").first()
         val hint = "$firstName, conecte com sua biblioteca do Spotify para continuar"
         binding.spotifyHint.text = SpannableString(hint).also {
             it.setSpan(
@@ -162,12 +166,13 @@ class SpotifyLinkActivity : AppCompatActivity() {
 
     private fun verifyAuthenticity(authorizationCode: String) {
         try {
-            SpotifyUtils.exchangeAndSaveTokens(authorizationCode)
+            lifecycleScope.launch {
+                SpotifyUtils.exchangeAndSaveTokens(applicationContext, authorizationCode, currentUser)
+            }
         } catch (_: Exception) {
             binding.spotifyHint.text = "Tivemos problemas ao falar com o Spotify, quer tentar novamente?"
             binding.isLoadingSpotify = false
         }
-
     }
 
     private fun setupLogoutButton() {

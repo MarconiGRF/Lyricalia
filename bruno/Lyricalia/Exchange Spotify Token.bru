@@ -1,0 +1,26 @@
+meta {
+  name: Exchange Spotify Token
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/spotify/auth
+  body: json
+  auth: inherit
+}
+
+headers {
+  content-type: application/json
+}
+
+body:json {
+  {
+    "id": 1,
+    "authorizationCode": "AQDqWlbWr7k0xvDYAwfcH7INlOYyFAg_GRWLxt6xTtJktMyB26pbRpQUvWOpKUS5nouYH4vJMUPDqvCaMFoKU4s084PTg9iLpH87bpgWGMGOAfrfCt2q2OLls9Q9QBTjYf4vEQmqm2Ai-S_zJUd1qkVEXQEw7mRvphJ9N2NsAQhBqGKwUcle",
+    "userId": "eu",
+    "accessToken": null,
+    "refreshToken": null,
+    "expiresIn": null
+  }
+}

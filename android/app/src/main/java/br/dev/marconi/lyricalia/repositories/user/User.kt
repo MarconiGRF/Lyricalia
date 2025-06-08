@@ -1,4 +1,4 @@
-package br.dev.marconi.lyricalia.repositories.login.models
+package br.dev.marconi.lyricalia.repositories.user
 
 import android.os.Parcel
 import android.os.Parcelable

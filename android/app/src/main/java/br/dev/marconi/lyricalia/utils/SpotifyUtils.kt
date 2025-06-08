@@ -1,16 +1,32 @@
 package br.dev.marconi.lyricalia.utils
 
+import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsEntity
+import br.dev.marconi.lyricalia.repositories.user.User
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
 
 class SpotifyUtils {
     companion object {
         const val REQUEST_CODE = 18
-        const val CLIENT_ID = "20a9c0b160ed45d88f8a3e0103924703"
         const val REDIRECT_URI = "lyricalia://link"
+        const val CLIENT_ID = "20a9c0b160ed45d88f8a3e0103924703"
+
+        private val client = HttpClient(CIO) {
+            expectSuccess = true
+            install(ContentNegotiation) { json() }
+        }
 
         fun authenticateUser(activity: AppCompatActivity) {
             val authorizationRequest = AuthorizationRequest.Builder(
@@ -24,8 +40,24 @@ class SpotifyUtils {
             AuthorizationClient.openLoginActivity(activity, REQUEST_CODE, authorizationRequest.build())
         }
 
-        fun exchangeAndSaveTokens(authorizationCode: String) {
+        fun buildCredentials(authorizationCode: String, currentUser: User) = SpotifyCredentialsEntity(
+            authorizationCode = authorizationCode,
+            userId = currentUser.id!!,
+            accessToken = null,
+        )
+
+        suspend fun exchangeAndSaveTokens(
+            context: Context,
+            authorizationCode: String,
+            currentUser: User
+        ) {
             try {
+                val serverIp = StorageUtils(context).retrieveServerIp()
+
+                var response = client.post("http://$serverIp:8080/spotify/auth") {
+                    contentType(ContentType.Application.Json)
+                    setBody(buildCredentials(authorizationCode, currentUser))
+                }
 
             } catch (ex: Exception) {
                 Log.e("IF1001_P3_LYRICALIA", "Failed to exchange tokens with spotify", ex)

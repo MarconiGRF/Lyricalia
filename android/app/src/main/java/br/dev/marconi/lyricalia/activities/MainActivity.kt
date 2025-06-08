@@ -1,7 +1,6 @@
 package br.dev.marconi.lyricalia.activities
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -13,7 +12,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMainBinding
 import br.dev.marconi.lyricalia.repositories.login.LoginSwiftRepository
-import br.dev.marconi.lyricalia.repositories.login.models.User
+import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import kotlinx.coroutines.launch
@@ -90,9 +89,13 @@ class MainActivity : AppCompatActivity() {
             binding.isLoading = true
 
             val user: User
+            val storageUtils = StorageUtils(applicationContext)
             try {
-                user = LoginSwiftRepository(binding.serverIp.text.toString()).createUser(name, username)
-                StorageUtils(applicationContext).saveUser(user)
+                storageUtils.saveServerIp(binding.serverIp.text.toString())
+
+                user = LoginSwiftRepository(applicationContext).createUser(name, username)
+                storageUtils.saveUser(user)
+
                 binding.isLoading = false
 
                 navigateAccordingToUserState()

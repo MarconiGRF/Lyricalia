@@ -1,7 +1,6 @@
 package br.dev.marconi.lyricalia.activities
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
@@ -12,12 +11,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.room.Room
 import br.dev.marconi.lyricalia.databinding.ActivityMenuBinding
-import br.dev.marconi.lyricalia.repositories.login.models.User
+import br.dev.marconi.lyricalia.repositories.lyric.LyricDatabase
+import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsDatabase
+import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
 
 class MenuActivity : AppCompatActivity() {
+    lateinit var lyricDb: LyricDatabase
     private lateinit var binding: ActivityMenuBinding
 
     private var greetingPhrases = arrayOf(
