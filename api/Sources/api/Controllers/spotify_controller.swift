@@ -16,6 +16,21 @@ struct SpotifyController: RouteCollection {
 
         spotifyRoutes.group("library") { spotifyRoutes in
             spotifyRoutes.post(use: dispatchProcessUserLibrary)
+            spotifyRoutes.webSocket { req, ws in getLibraryStatus(req, ws) }
+        }
+    }
+
+    func getLibraryStatus(_ req: Request, _ ws: WebSocket) {
+        ws.onText { ws, text in
+            let uuid = UUID(uuidString: text)
+            if (uuid == nil) { ws.close(code: .unacceptableData, promise: nil) }
+
+            let queue = await UserLibraryProcessorQueue.shared
+
+            let libStatus = queue.getStatusForUserID(userId: uuid!)
+            if (libStatus == nil) { ws.close(code: .protocolError, promise: nil) }
+
+            libStatus!.webSocket = ws
         }
     }
 
@@ -33,7 +48,6 @@ struct SpotifyController: RouteCollection {
             throw Abort(.badRequest, reason: "User library already being processed")
         }
 
-        print("appended jubilu")
         let libStatus = LibraryProcessingStatus(100, userId, spotifyToken)
         queue.append(libStatus)
         UserLibraryProcessor(libStatus: libStatus).start()
