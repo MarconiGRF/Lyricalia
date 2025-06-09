@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import br.dev.marconi.lyricalia.databinding.ActivityMenuBinding
 import br.dev.marconi.lyricalia.repositories.lyric.LyricDatabase
@@ -18,10 +19,22 @@ import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentia
 import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.wss
+import io.ktor.http.HttpMethod
+import io.ktor.websocket.Frame
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlin.Int
 
 class MenuActivity : AppCompatActivity() {
     lateinit var lyricDb: LyricDatabase
     private lateinit var binding: ActivityMenuBinding
+    private lateinit var storage: StorageUtils
+    private val client = HttpClient {
+        install(WebSockets)
+    }
 
     private var greetingPhrases = arrayOf(
         Pair("Qual a letra de hoje, <USER>?", "¯\\_(ツ)_/¯"),
@@ -43,12 +56,15 @@ class MenuActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
+        storage = StorageUtils(applicationContext)
+        binding.isProcessingLibrary = true
 
-        val user = StorageUtils(this).retrieveUser()
+        val user = storage.retrieveUser()
         if (user != null) {
             user.spotifyToken?.run {
                 setupGreeting(user)
                 setupLogoutButton()
+                followLibraryProcessing(user)
             } ?: NavigationUtils.navigateToSpotifyLink(this)
         }
     }
@@ -74,6 +90,25 @@ class MenuActivity : AppCompatActivity() {
 
         binding = ActivityMenuBinding.inflate(layoutInflater)
         setupMenuActivity()
+    }
+
+    private fun followLibraryProcessing(user: User) {
+        val serverIp = storage.retrieveServerIp()
+        lifecycleScope.launch {
+            client.wss(HttpMethod.Get, "http://$serverIp:8080/spotify/library") {
+                try {
+                    send(Frame.Text(user.id!!))
+
+                    for (frame in incoming) {
+                        if (frame is Frame.Text) {
+                            binding.libraryProcessingProgress = frame.toString().toInt()
+                        }
+                    }
+                } catch (ex: Exception) {
+                    Toast.makeText(applicationContext, "Websocket closed - $ex", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     @SuppressLint("SetTextI18n")
