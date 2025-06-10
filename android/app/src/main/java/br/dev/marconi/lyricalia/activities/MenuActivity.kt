@@ -56,7 +56,7 @@ class MenuActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        storage = StorageUtils(applicationContext)
+        storage = StorageUtils(applicationContext.filesDir)
         binding.isProcessingLibrary = true
 
         val user = storage.retrieveUser()
@@ -64,7 +64,7 @@ class MenuActivity : AppCompatActivity() {
             user.spotifyToken?.run {
                 setupGreeting(user)
                 setupLogoutButton()
-                followLibraryProcessing(user)
+//                followLibraryProcessing(user)
             } ?: NavigationUtils.navigateToSpotifyLink(this)
         }
     }
@@ -101,7 +101,7 @@ class MenuActivity : AppCompatActivity() {
 
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
-                            binding.libraryProcessingProgress = frame.toString().toInt()
+//                            binding.libraryProcessingProgress = frame.toString().toInt()
                         }
                     }
                 } catch (ex: Exception) {
@@ -154,7 +154,7 @@ class MenuActivity : AppCompatActivity() {
     }
 
     private fun logout() {
-        StorageUtils(applicationContext).deleteUser()
+        StorageUtils(applicationContext.filesDir).deleteUser()
         NavigationUtils.navigateToLogin(this)
     }
 }

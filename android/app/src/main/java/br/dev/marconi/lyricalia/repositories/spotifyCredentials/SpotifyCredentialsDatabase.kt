@@ -14,7 +14,7 @@ abstract class SpotifyCredentialsDatabase : RoomDatabase() {
             return Room.databaseBuilder<SpotifyCredentialsDatabase>(
                 context,
                 SpotifyCredentialsDatabase::class.java, "spotify_credentials_db"
-            ).allowMainThreadQueries().build()
+            ).build()
         }
     }
 }

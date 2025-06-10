@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateAccordingToUserState() {
-        val user = StorageUtils(applicationContext).retrieveUser()
+        val user = StorageUtils(applicationContext.filesDir).retrieveUser()
         if (user != null) {
             when {
                 user.spotifyToken != null -> NavigationUtils.navigateToMenu(this)
@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
             binding.isLoading = true
 
             val user: User
-            val storageUtils = StorageUtils(applicationContext)
+            val storageUtils = StorageUtils(applicationContext.filesDir)
             try {
                 storageUtils.saveServerIp(binding.serverIp.text.toString())
 

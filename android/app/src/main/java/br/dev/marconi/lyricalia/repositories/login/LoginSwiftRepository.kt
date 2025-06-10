@@ -25,7 +25,7 @@ class LoginSwiftRepository : LoginRepository {
     private var serverIp: String
 
     constructor(context: Context) {
-        this.serverIp = StorageUtils(context).retrieveServerIp()
+        this.serverIp = StorageUtils(context.filesDir).retrieveServerIp()
         this.baseUrl = "http://$serverIp:8080"
     }
 

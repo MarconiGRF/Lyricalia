@@ -50,14 +50,13 @@ class SpotifyUtils {
 
         suspend fun exchangeAndSaveTokens(context: Context, authorizationCode: String): SpotifyCredentialsEntity {
             try {
-                val serverIp = StorageUtils(context).retrieveServerIp()
+                val serverIp = StorageUtils(context.filesDir).retrieveServerIp()
 
                 var response = client.post("http://$serverIp:8080/spotify/auth") {
                     contentType(ContentType.Application.Json)
                     setBody(buildCredentials(authorizationCode))
                 }
                 val body = response.body<SpotifyCredentialsEntity>()
-                saveCredentials(context, body)
 
                 return body
             } catch (ex: Exception) {
@@ -72,11 +71,16 @@ class SpotifyUtils {
         }
 
         suspend fun dispatchProcessUserLibrary(context: Context) {
-            val serverIp = StorageUtils(context).retrieveServerIp()
-            val user = StorageUtils(context).retrieveUser()
-            client.post("http://$serverIp:8080/spotify/library") {
-                contentType(ContentType.Application.Json)
-                setBody(user)
+            val serverIp = StorageUtils(context.filesDir).retrieveServerIp()
+            val user = StorageUtils(context.filesDir).retrieveUser()
+
+            try {
+                client.post("http://$serverIp:8080/spotify/library") {
+                    contentType(ContentType.Application.Json)
+                    setBody(user)
+                }
+            } catch (ex: Exception) {
+
             }
         }
     }
