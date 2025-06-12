@@ -23,12 +23,18 @@ struct SpotifyController: RouteCollection {
     func getLibraryStatus(_ req: Request, _ ws: WebSocket) {
         ws.onText { ws, text in
             let uuid = UUID(uuidString: text)
-            if (uuid == nil) { ws.close(code: .unacceptableData, promise: nil) }
+            if (uuid == nil) {
+                ws.close(code: .unacceptableData, promise: nil)
+                return
+            }
 
             let queue = await UserLibraryProcessorQueue.shared
 
             let libStatus = queue.getStatusForUserID(userId: uuid!)
-            if (libStatus == nil) { ws.close(code: .protocolError, promise: nil) }
+            if (libStatus == nil) {
+                ws.close(code: .protocolError, promise: nil)
+                return
+            }
 
             libStatus!.webSocket = ws
         }
@@ -49,6 +55,7 @@ struct SpotifyController: RouteCollection {
         }
 
         let libStatus = LibraryProcessingStatus(100, userId, spotifyToken)
+        print("Queue status before: \(queue)")
         queue.append(libStatus)
         UserLibraryProcessor(libStatus: libStatus).start()
 

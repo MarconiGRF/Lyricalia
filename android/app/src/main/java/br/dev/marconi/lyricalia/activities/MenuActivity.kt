@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -18,13 +19,17 @@ import br.dev.marconi.lyricalia.repositories.lyric.LyricDatabase
 import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsDatabase
 import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.NavigationUtils
+import br.dev.marconi.lyricalia.utils.SpotifyUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
 import io.ktor.websocket.Frame
+import io.ktor.websocket.readReason
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.Int
 
@@ -64,7 +69,7 @@ class MenuActivity : AppCompatActivity() {
             user.spotifyToken?.run {
                 setupGreeting(user)
                 setupLogoutButton()
-//                followLibraryProcessing(user)
+                followLibraryProcessing(user)
             } ?: NavigationUtils.navigateToSpotifyLink(this)
         }
     }
@@ -93,20 +98,33 @@ class MenuActivity : AppCompatActivity() {
     }
 
     private fun followLibraryProcessing(user: User) {
+
         val serverIp = storage.retrieveServerIp()
         lifecycleScope.launch {
-            client.wss(HttpMethod.Get, "http://$serverIp:8080/spotify/library") {
+//            SpotifyUtils.dispatchProcessUserLibrary(applicationContext)
+
+            delay(1000)
+
+            client.webSocket(HttpMethod.Get, serverIp, 8080, "/spotify/library") {
                 try {
                     send(Frame.Text(user.id!!))
 
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
-//                            binding.libraryProcessingProgress = frame.toString().toInt()
+                            binding.libraryProcessingProgress.text = String(frame.data)
+                            Log.d("IF1001_P3_LYRICALIA", "Websocket text received: $frame")
+                        }
+                        else if (frame is Frame.Close) {
+                            Log.d("IF1001_P3_LYRICALIA", "Websocket closed: ${frame.readReason()}")
+                            Toast.makeText(applicationContext, "Websocket closed: ${frame.readReason()}", Toast.LENGTH_LONG).show()
                         }
                     }
+
+                    Log.d("IF1001_P3_LYRICALIA", "Websocket possibly closed!")
                 } catch (ex: Exception) {
-                    Toast.makeText(applicationContext, "Websocket closed - $ex", Toast.LENGTH_LONG).show()
+                    Log.e("IF1001_P3_LYRICALIA", "Websocket exception: $ex")
                 }
+
             }
         }
     }

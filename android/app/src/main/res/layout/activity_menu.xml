@@ -5,9 +5,6 @@
         <variable
             name="isProcessingLibrary"
             type="boolean" />
-        <variable
-            name="libraryProcessingProgress"
-            type="int" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -100,6 +97,20 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintVertical_bias="0"
                 app:layout_constraintHorizontal_bias="0" />
+            <TextView
+                android:id="@+id/libraryProcessingProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/domine"
+                android:paddingEnd="48dp"
+                android:textColor="@color/lyDarkerGray"
+                android:textSize="24sp"
+                android:textAlignment="center"
+                android:text="$WEBSOCKET PROGRESS"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
