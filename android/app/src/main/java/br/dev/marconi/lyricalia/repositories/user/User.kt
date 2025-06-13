@@ -1,43 +1,14 @@
 package br.dev.marconi.lyricalia.repositories.user
 
-import android.os.Parcel
-import android.os.Parcelable
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class User (
-    val username: String,
     val name: String,
+    val username: String,
     val id: String?,
     var spotifyToken: String?,
-): Parcelable {
-    constructor(username: String, name: String): this(username, name, null, null)
-
-    constructor(parcel: Parcel): this(
-        parcel.readString() ?: "",
-        parcel.readString() ?: "",
-        parcel.readString(),
-        parcel.readString()
-    )
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeString(username)
-        dest.writeString(name)
-        dest.writeString(id)
-        dest.writeString(spotifyToken)
-    }
-
-    companion object CREATOR : Parcelable.Creator<User> {
-        override fun createFromParcel(parcel: Parcel): User {
-            return User(parcel)
-        }
-
-        override fun newArray(size: Int): Array<User?> {
-            return arrayOfNulls(size)
-        }
-    }
+    var isLibraryProcessed: Boolean = false
+) {
+    constructor(name: String, username: String) : this(name, username, null, null, false)
 }

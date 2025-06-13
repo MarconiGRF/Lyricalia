@@ -9,6 +9,7 @@ public func configure(_ app: Application) async throws {
 
     app.databases.use(.sqlite(.file("Sources/api/Persistence/db.sqlite")), as: .sqlite)
     app.migrations.add(UserMigration())
+    app.migrations.add(AddProcessingStatusMigration())
 
     try await app.autoMigrate()
     try routes(app)

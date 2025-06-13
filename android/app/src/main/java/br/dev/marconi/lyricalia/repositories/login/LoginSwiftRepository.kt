@@ -34,7 +34,8 @@ class LoginSwiftRepository : LoginRepository {
         try {
             response = client.post("$baseUrl/users") {
                 contentType(ContentType.Application.Json)
-                setBody(User(username, name))
+                val userDto = User(name, username)
+                setBody(userDto)
             }
         } catch (e: Exception) {
             throw e

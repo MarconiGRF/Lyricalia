@@ -29,6 +29,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readReason
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.Int
@@ -111,7 +112,7 @@ class MenuActivity : AppCompatActivity() {
 
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
-                            binding.libraryProcessingProgress.text = String(frame.data)
+//                            binding.libraryProcessingProgress.text = String(frame.data)
                             Log.d("IF1001_P3_LYRICALIA", "Websocket text received: $frame")
                         }
                         else if (frame is Frame.Close) {
@@ -127,6 +128,24 @@ class MenuActivity : AppCompatActivity() {
 
             }
         }
+    }
+
+    suspend fun counter(): Int {
+        delay(1000)
+        binding.tv1.text = "thread1"
+
+        return 1
+    }
+    suspend fun counter2(): Int {
+        delay(1000)
+        binding.tv2.text = "thread2"
+
+        return 2
+    }
+    suspend fun counter4(): Int {
+        delay(1000)
+
+        return 4
     }
 
     @SuppressLint("SetTextI18n")

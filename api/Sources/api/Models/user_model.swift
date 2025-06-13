@@ -23,10 +23,14 @@ final class User: Model, Content, @unchecked Sendable {
     @Field(key: "spotifyToken")
     var spotifyToken: String?
 
+    @Field(key: "isLibraryProcessed")
+    var isLibraryProcessed: Bool
+
     init() {}
 
     init(username: String, name: String) {
         self.username = username
         self.name = name
+        self.isLibraryProcessed = false
     }
 }

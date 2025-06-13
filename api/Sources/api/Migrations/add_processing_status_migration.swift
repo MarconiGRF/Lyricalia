@@ -7,18 +7,14 @@
 
 import Fluent
 
-struct UserMigration: AsyncMigration {
+struct AddProcessingStatusMigration: AsyncMigration {
     func revert(on database: any FluentKit.Database) async throws {
         try await database.schema("users").delete()
     }
 
     func prepare(on database: any Database) async throws {
         try await database.schema("users")
-            .id()
-            .field("name", .string)
-            .field("username", .string)
-            .field("spotifyToken", .string)
-            .field("spotifyToken", .bool)
-            .create()
+            .field("isLibraryProcessed", .bool)
+            .update()
     }
 }
