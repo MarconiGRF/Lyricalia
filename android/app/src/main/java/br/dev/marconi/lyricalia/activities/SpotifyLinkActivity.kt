@@ -205,7 +205,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
 
                 val user = viewModel.currentUser.value!!
                 user.spotifyToken = credentials.accessToken
-                viewModel.updateUser(user)
+                StorageUtils(applicationContext.filesDir).saveUser(user)
 
                 SpotifyUtils.dispatchProcessUserLibrary(applicationContext)
                 NavigationUtils.navigateToMenu(applicationContext)

@@ -22,15 +22,30 @@ struct SpotifyController: RouteCollection {
 
     func getLibraryStatus(_ req: Request, _ ws: WebSocket) {
         ws.onText { ws, text in
-            let uuid = UUID(uuidString: text)
-            if (uuid == nil) {
+            let userId = UUID(uuidString: text)
+            if (userId == nil) {
                 ws.close(code: .unacceptableData, promise: nil)
+                return
+            }
+
+            do {
+                let maybeUser = try await User.find(userId, on: req.db)
+                guard let user = maybeUser else {
+                    ws.close(code: .unacceptableData, promise: nil)
+                    return
+                }
+                if (user.isLibraryProcessed) {
+                    ws.close(code: .normalClosure, promise: nil)
+                    return
+                }
+            } catch {
+                ws.close(code: .unexpectedServerError, promise: nil)
                 return
             }
 
             let queue = await UserLibraryProcessorQueue.shared
 
-            let libStatus = queue.getStatusForUserID(userId: uuid!)
+            let libStatus = queue.getStatusForUserID(userId: userId!)
             if (libStatus == nil) {
                 ws.close(code: .protocolError, promise: nil)
                 return
@@ -54,10 +69,9 @@ struct SpotifyController: RouteCollection {
             throw Abort(.badRequest, reason: "User library already being processed")
         }
 
-        let libStatus = LibraryProcessingStatus(100, userId, spotifyToken)
-        print("Queue status before: \(queue)")
+        let libStatus = LibraryProcessingStatus(500, userId, spotifyToken, req.db, req.client)
         queue.append(libStatus)
-        UserLibraryProcessor(libStatus: libStatus).start()
+        UserLibraryProcessor(libStatus).start()
 
         return true
     }

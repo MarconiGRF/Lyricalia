@@ -1,4 +1,5 @@
 import Foundation
+import Fluent
 
 class UserLibraryProcessor: Thread, @unchecked Sendable {
     let waiter = DispatchGroup()
@@ -12,31 +13,32 @@ class UserLibraryProcessor: Thread, @unchecked Sendable {
     override func main() {
         Task {
             while(libStatus.processedItems < libStatus.totalItems) {
-                try await Task.sleep(nanoseconds: 50000000)
+                try await Task.sleep(nanoseconds: 500000000)
 
-
-                print("\(libStatus.userId) - adding to processed items - \(libStatus.processedItems) of \(libStatus.totalItems)")
                 libStatus.processedItems += 1
 
                 if (libStatus.webSocket != nil) {
                     try await libStatus.webSocket!.send("\(libStatus.processedItems)")
-                    print("Sending info through websocket")
-                } else {
-                    print("No websocket for user library \(libStatus.userId)")
                 }
             }
 
+            let user = try await User.find(libStatus.userId, on: libStatus.db)
+            guard user != nil else {
+                if (libStatus.webSocket != nil) { try await libStatus.webSocket!.close(code: .unexpectedServerError) }
+                throw LyricaliaAPIError.inconsistency("NO USER FOR PROCESSED LIBRARY, I WILL DO ABSOLUTELY NOTHING ABOUT THIS!!!")
+            }
+            user!.isLibraryProcessed = true
+            try await user!.save(on: libStatus.db)
+
             if (libStatus.webSocket != nil) {
-                // try await libStatus.webSocket!.send("Done!")
+                try await libStatus.webSocket!.send("Done!")
                 try await libStatus.webSocket!.close(code: .normalClosure)
                 print("Done processing library \(libStatus.processedItems)")
             }
-
-            
         }
     }
 
-    init(libStatus: LibraryProcessingStatus) {
+    init(_ libStatus: LibraryProcessingStatus) {
         self.libStatus = libStatus
     }
 }

@@ -26,6 +26,7 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.plugins.websocket.wss
 import io.ktor.http.HttpMethod
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readReason
 import kotlinx.coroutines.GlobalScope
@@ -99,20 +100,15 @@ class MenuActivity : AppCompatActivity() {
     }
 
     private fun followLibraryProcessing(user: User) {
-
         val serverIp = storage.retrieveServerIp()
         lifecycleScope.launch {
-//            SpotifyUtils.dispatchProcessUserLibrary(applicationContext)
-
-            delay(1000)
-
             client.webSocket(HttpMethod.Get, serverIp, 8080, "/spotify/library") {
                 try {
                     send(Frame.Text(user.id!!))
 
                     for (frame in incoming) {
                         if (frame is Frame.Text) {
-//                            binding.libraryProcessingProgress.text = String(frame.data)
+                            binding.libraryProcessingProgress.text = String(frame.data)
                             Log.d("IF1001_P3_LYRICALIA", "Websocket text received: $frame")
                         }
                         else if (frame is Frame.Close) {
@@ -120,32 +116,15 @@ class MenuActivity : AppCompatActivity() {
                             Toast.makeText(applicationContext, "Websocket closed: ${frame.readReason()}", Toast.LENGTH_LONG).show()
                         }
                     }
-
-                    Log.d("IF1001_P3_LYRICALIA", "Websocket possibly closed!")
                 } catch (ex: Exception) {
                     Log.e("IF1001_P3_LYRICALIA", "Websocket exception: $ex")
+                } finally {
+                    if (closeReason.await()?.code == CloseReason.Codes.NORMAL.code) {
+                        binding.libraryProcessingProgress.text = "Biblioteca Atualizada."
+                    }
                 }
-
             }
         }
-    }
-
-    suspend fun counter(): Int {
-        delay(1000)
-        binding.tv1.text = "thread1"
-
-        return 1
-    }
-    suspend fun counter2(): Int {
-        delay(1000)
-        binding.tv2.text = "thread2"
-
-        return 2
-    }
-    suspend fun counter4(): Int {
-        delay(1000)
-
-        return 4
     }
 
     @SuppressLint("SetTextI18n")
