@@ -1,6 +1,8 @@
 package br.dev.marconi.lyricalia.activities
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
@@ -14,6 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
+import br.dev.marconi.lyricalia.broadcastReceivers.ExampleBCReceiver
 import br.dev.marconi.lyricalia.databinding.ActivityMenuBinding
 import br.dev.marconi.lyricalia.repositories.lyric.LyricDatabase
 import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsDatabase
@@ -71,8 +74,19 @@ class MenuActivity : AppCompatActivity() {
             user.spotifyToken?.run {
                 setupGreeting(user)
                 setupLogoutButton()
-                followLibraryProcessing(user)
+//                followLibraryProcessing(user)
             } ?: NavigationUtils.navigateToSpotifyLink(this)
+        }
+
+        IntentFilter("br.dev.marconi.lyricalia.MenuActivity").also {
+            registerReceiver(ExampleBCReceiver(), it, RECEIVER_EXPORTED)
+        }
+
+        binding.libraryProcessingProgress.setOnClickListener {
+            val intent = Intent()
+            intent.setAction("br.dev.marconi.lyricalia.MenuActivity")
+            intent.putExtra("data", "pipipi")
+            sendBroadcast(intent)
         }
     }
 

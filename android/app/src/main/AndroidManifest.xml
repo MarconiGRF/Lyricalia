@@ -19,6 +19,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Lyricalia"
         android:usesCleartextTraffic="true">
+        <!-- Broadcast Receivers -->
+        <receiver android:name=".broadcastReceivers.ExampleBCReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="APP_SPECIFIC_BROADCAST" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".activities.SpotifyLinkActivity"
             android:exported="true">
