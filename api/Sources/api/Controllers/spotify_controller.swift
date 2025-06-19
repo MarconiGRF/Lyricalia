@@ -20,6 +20,7 @@ struct SpotifyController: RouteCollection {
         }
     }
 
+    @Sendable
     func getLibraryStatus(_ req: Request, _ ws: WebSocket) {
         ws.onText { ws, text in
             let userId = UUID(uuidString: text)
@@ -51,7 +52,9 @@ struct SpotifyController: RouteCollection {
                 return
             }
 
-            libStatus!.webSocket = ws
+            Task { @MainActor in
+                libStatus!.webSocket = ws
+            }
         }
     }
 
@@ -69,10 +72,19 @@ struct SpotifyController: RouteCollection {
             throw Abort(.badRequest, reason: "User library already being processed")
         }
 
-        let libStatus = LibraryProcessingStatus(500, userId, spotifyToken, req.db, req.client)
+        let libStatus = LibraryProcessingStatus(userId, spotifyToken, req.db, req.client)
         queue.append(libStatus)
-        UserLibraryProcessor(libStatus).start()
 
+        Task.detached(priority: .background) {
+            print("Detached task started on BG")
+            do {
+                try await UserLibraryProcessor(libStatus).process()
+            } catch {
+                print("Error inside task! \(error)")
+            }
+        }
+
+        print("Returned true to user")
         return true
     }
 

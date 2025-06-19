@@ -15,4 +15,5 @@
     <string name="notification_permission_rationale_explanation">pra te avisar quando o processo de conectar com o Spotify estiver completo</string>
     <string name="okay_confirm">Tudo bem</string>
     <string name="later_dismiss">Mais tarde</string>
+    <string name="processing_hint">Pensando no seu gosto musical...</string>
 </resources>

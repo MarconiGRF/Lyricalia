@@ -34,7 +34,10 @@ class MainActivity : AppCompatActivity() {
                 user.spotifyToken != null -> NavigationUtils.navigateToMenu(this)
                 else                      -> NavigationUtils.navigateToSpotifyLink(this)
             }
-        } else setupMainActivity()
+        } else {
+            setupMainActivity()
+        }
+        binding.isLoading = false
     }
 
     private fun setupMainActivity() {
@@ -95,8 +98,6 @@ class MainActivity : AppCompatActivity() {
 
                 user = LoginSwiftRepository(applicationContext).createUser(name, username)
                 storageUtils.saveUser(user)
-
-                binding.isLoading = false
 
                 navigateAccordingToUserState()
             } catch (e: Exception) {

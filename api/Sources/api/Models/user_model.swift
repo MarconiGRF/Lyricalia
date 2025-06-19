@@ -1,10 +1,3 @@
-//
-//  user.swift
-//  api
-//
-//  Created by Marconi Filho on 06/05/25.
-//
-
 import Fluent
 import Vapor
 
@@ -25,6 +18,9 @@ final class User: Model, Content, @unchecked Sendable {
 
     @Field(key: "isLibraryProcessed")
     var isLibraryProcessed: Bool
+
+    @Siblings(through: UserSong.self, from: \.$user, to: \.$song)
+    public var songss: [Song]
 
     init() {}
 
