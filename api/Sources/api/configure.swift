@@ -12,6 +12,7 @@ public func configure(_ app: Application) async throws {
     app.migrations.add(UserMigration())
     app.migrations.add(AddProcessingStatusMigration())
     app.migrations.add(UserSongCreationMigration())
+    app.migrations.add(SongMigration())
 
     try await app.autoMigrate()
     try routes(app)

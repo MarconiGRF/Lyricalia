@@ -75,16 +75,14 @@ struct SpotifyController: RouteCollection {
         let libStatus = LibraryProcessingStatus(userId, spotifyToken, req.db, req.client)
         queue.append(libStatus)
 
-        Task.detached(priority: .background) {
-            print("Detached task started on BG")
+        Task {
             do {
                 try await UserLibraryProcessor(libStatus).process()
             } catch {
-                print("Error inside task! \(error)")
+                print("Error inside processing task! \(error)")
             }
         }
 
-        print("Returned true to user")
         return true
     }
 

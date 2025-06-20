@@ -24,6 +24,10 @@ class UserLibraryProcessorQueue: @unchecked Sendable {
     func getSize() -> Int {
         return self.processingQueue.count
     }
+
+    func remove(userId: UUID) {
+        self.processingQueue[userId] = nil
+    }
 }
 
 // // Storage key for the service

@@ -20,7 +20,7 @@ final class User: Model, Content, @unchecked Sendable {
     var isLibraryProcessed: Bool
 
     @Siblings(through: UserSong.self, from: \.$user, to: \.$song)
-    public var songss: [Song]
+    public var songs: [Song]
 
     init() {}
 

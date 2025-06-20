@@ -1,8 +1,9 @@
 import Foundation
+import struct Foundation.UUID
 import Fluent
 import Vapor
 
-struct UserLibraryProcessor {
+struct UserLibraryProcessor: @unchecked Sendable {
     var libStatus: LibraryProcessingStatus
 
     init(_ libStatus: LibraryProcessingStatus) {
@@ -13,19 +14,10 @@ struct UserLibraryProcessor {
         do {
             let songs = try await parseSongsFromSpotify()
 
-            // while(libStatus.processedItems < libStatus.totalItems) {
-            //     try await Task.sleep(nanoseconds: 500000000)
+            try await linkSpotifySongsToUser(songs: songs)
+            try await signalProcessingComplete()
 
-            //     libStatus.processedItems += 1
-
-                // if (libStatus.webSocket != nil) {
-                //     try await libStatus.webSocket!.send("\(libStatus.progressPercentage)")
-                // }
-            // }
-
-            // try await linkSpotifySongsToUser(songs: songs)
-            // try await signalProcessingComplete()
-
+            await removeProcessingStatusFromQueue()
         } catch {
             if (libStatus.webSocket != nil) { try await libStatus.webSocket!.close(code: .unexpectedServerError) }
             libStatus.webSocket = nil
@@ -54,6 +46,7 @@ struct UserLibraryProcessor {
                 }
 
                 libStatus.progressPercentage = (Double(songs.count) / Double(savedTracksResponse.total) * 50) / 100
+                print("\(libStatus.progressPercentage)% Progress for user \(libStatus.userId)")
                 try await sendMessage(message: "\(libStatus.progressPercentage)")
 
                 if (songLimit < savedTracksResponse.total) {
@@ -76,16 +69,48 @@ struct UserLibraryProcessor {
 
     private func linkSpotifySongsToUser(songs: [Song]) async throws {
         do {
-            let user = try await User.find(libStatus.userId, on: libStatus.db)
-            guard user != nil else {
+            guard let user = try await User.find(libStatus.userId, on: libStatus.db) else {
                 if (libStatus.webSocket != nil) { try await libStatus.webSocket!.close(code: .unexpectedServerError) }
                 throw LyricaliaAPIError.inconsistency("NO USER FOR PROCESSED LIBRARY, I WILL DO ABSOLUTELY NOTHING ABOUT THIS!!!")
             }
 
-            user!.isLibraryProcessed = true
+            var existingSongIds: [String : Song] = [:]
+            try await Song.query(on: libStatus.db)
+                .with(\.$users)
+                .filter(\.$spotifyId ~~ songs.map{ $0.spotifyId })
+                .all()
+                .forEach { existingSong in
+                    existingSongIds[existingSong.spotifyId] = existingSong
+                }
 
-            try await user!.save(on: libStatus.db)
+            libStatus.progressPercentage += 0.15
+            print("\(libStatus.progressPercentage * 100)% Progress for user \(libStatus.userId)")
+            try await sendMessage(message: "\(libStatus.progressPercentage)")
+
+            for song in songs {
+                if (existingSongIds[song.spotifyId] == nil) {
+                    print("Song \(song.spotifyId) not found on DB, creating...")
+                    try await song.create(on: libStatus.db)
+
+                    print("Song \(song.spotifyId) created, attaching user...")
+                    try await song.$users.attach(user, on: libStatus.db)
+                } else {
+                    print("Song \(song.spotifyId) exists, attaching user...")
+
+                    let existingSong = existingSongIds[song.spotifyId]!
+                    try await existingSong.$users.attach(user, method: .ifNotExists, on: libStatus.db)
+                    try await existingSong.update(on: libStatus.db)
+                }
+            }
+
+            libStatus.progressPercentage += 0.30
+            print("\(libStatus.progressPercentage * 100)% Progress for user \(libStatus.userId)")
+            try await sendMessage(message: "\(libStatus.progressPercentage)")
+
+            user.isLibraryProcessed = true
+            try await user.save(on: libStatus.db)
         } catch {
+            print("Failed to Link user to songs -> \(error)")
             throw error
         }
     }
@@ -102,8 +127,17 @@ struct UserLibraryProcessor {
     }
 
     private func signalProcessingComplete() async throws {
+        libStatus.progressPercentage = 1
+        print("\(libStatus.progressPercentage)% Progress for user \(libStatus.userId)")
+        try await sendMessage(message: "\(libStatus.progressPercentage)")
+
         if (libStatus.webSocket != nil) {
             try await libStatus.webSocket!.close(code: .normalClosure)
         }
+    }
+
+    private func removeProcessingStatusFromQueue() async {
+        let queue = await UserLibraryProcessorQueue.shared
+        queue.remove(userId: libStatus.userId)
     }
 }

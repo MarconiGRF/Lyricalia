@@ -7,17 +7,17 @@
 
 import Fluent
 
-struct UserMigration: AsyncMigration {
+struct SongMigration: AsyncMigration {
     func revert(on database: any FluentKit.Database) async throws {
-        try await database.schema("users").delete()
+        try await database.schema("songs").delete()
     }
 
     func prepare(on database: any Database) async throws {
-        try await database.schema("users")
+        try await database.schema("songs")
             .id()
-            .field("name", .string)
-            .field("username", .string)
-            .field("spotifyToken", .string)
+            .field("name", .string, .required)
+            .field("artist", .string, .required)
+            .field("spotifyId", .string, .required)
             .create()
     }
 }
