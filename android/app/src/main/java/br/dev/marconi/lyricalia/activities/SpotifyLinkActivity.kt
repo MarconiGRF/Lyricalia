@@ -33,6 +33,7 @@ import br.dev.marconi.lyricalia.viewModels.SpotifyLinkViewModelFactory
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class SpotifyLinkActivity : AppCompatActivity() {
@@ -125,16 +126,6 @@ class SpotifyLinkActivity : AppCompatActivity() {
     }
     // endregion
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        binding.isLoadingSpotify = true
-        if (requestCode == SpotifyUtils.REQUEST_CODE) {
-            val response = AuthorizationClient.getResponse(resultCode, intent)
-            handleSpotifyLoginResult(response)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -207,7 +198,9 @@ class SpotifyLinkActivity : AppCompatActivity() {
                 user.spotifyToken = credentials.accessToken
                 StorageUtils(applicationContext.filesDir).saveUser(user)
 
-                SpotifyUtils.dispatchProcessUserLibrary(applicationContext)
+                val dispatch = async { SpotifyUtils.dispatchProcessUserLibrary(applicationContext) }
+                dispatch.await()
+
                 NavigationUtils.navigateToMenu(applicationContext)
             }
         } catch (ex: Exception) {

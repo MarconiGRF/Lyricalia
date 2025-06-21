@@ -36,11 +36,9 @@ class SpotifyUtils {
                 CLIENT_ID,
                 AuthorizationResponse.Type.CODE,
                 REDIRECT_URI
-            ).also {
-                it.setScopes(arrayOf("user-library-read"))
-            }
+            ).also { it.setScopes(arrayOf("user-library-read")) }
 
-            AuthorizationClient.openLoginActivity(activity, REQUEST_CODE, authorizationRequest.build())
+            AuthorizationClient.openLoginInBrowser(activity, authorizationRequest.build())
         }
 
         fun buildCredentials(authorizationCode: String) = SpotifyCredentialsEntity(

@@ -58,32 +58,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupServerIp()
-        setupUsernameMask()
     }
 
     @SuppressLint("SetTextI18n")
     private fun setupServerIp() {
-        //TODO: Add server config storage to pass to other views
         binding.serverIp.setText("10.0.2.2")
-    }
-
-    private fun setupUsernameMask() {
-        binding.usernameText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
-
-            override fun afterTextChanged(s: Editable?) {
-                s?.let { editable ->
-                    binding.usernameText.removeTextChangedListener(this)
-
-                    val modified = editable.replace("@".toRegex(), "" )
-                    binding.usernameText.setText("@$modified")
-                    binding.usernameText.setSelection(modified.length + 1)
-
-                    binding.usernameText.addTextChangedListener(this)
-                }
-            }
-        })
     }
 
     private fun showLongToast(text: String) {
