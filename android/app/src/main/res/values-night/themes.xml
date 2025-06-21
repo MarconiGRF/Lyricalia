@@ -3,5 +3,9 @@
     <style name="Base.Theme.Lyricalia" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+
+        <item name="android:windowSplashScreenBackground">@color/lyDarkerGray</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_animated_vector_night</item>
+        <item name="android:windowSplashScreenAnimationDuration">1000</item>
     </style>
 </resources>

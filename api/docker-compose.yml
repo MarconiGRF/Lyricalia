@@ -15,10 +15,13 @@
 
 x-shared_environment: &shared_environment
   LOG_LEVEL: ${LOG_LEVEL:-debug}
-  
+
 services:
   app:
     image: api:latest
+    volumes:
+      - ./Sources/api/Persistence/db.sqlite:/app/Persistence/db.sqlite:rw
+      - ./Sources/api/.env:/app/.env.production:ro
     build:
       context: .
     environment:

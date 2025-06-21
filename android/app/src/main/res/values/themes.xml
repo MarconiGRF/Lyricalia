@@ -2,7 +2,13 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.Lyricalia" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+<!--        <item name="colorPrimary">@color/lyWhite</item>-->
+        <item name="android:windowSplashScreenBackground">@color/lyWhite</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_animated_vector</item>
+        <item name="android:windowSplashScreenAnimationDuration">1000</item>
+
+        <!-- Keep splash on screen until ready -->
+<!--        <item name="postSplashScreenTheme">@style/Theme.MyApp</item>    -->
     </style>
 
     <style name="Theme.Lyricalia" parent="Base.Theme.Lyricalia" />

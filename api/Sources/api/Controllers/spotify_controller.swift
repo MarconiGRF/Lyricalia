@@ -10,6 +10,8 @@ struct SpotifyController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let spotifyRoutes = routes.grouped("spotify")
 
+        spotifyRoutes.get(use: pi)
+
         spotifyRoutes.group("auth") { spotifyRoutes in
             spotifyRoutes.post(use: exchangeCode)
         }
@@ -18,6 +20,15 @@ struct SpotifyController: RouteCollection {
             spotifyRoutes.post(use: dispatchProcessUserLibrary)
             spotifyRoutes.webSocket { req, ws in getLibraryStatus(req, ws) }
         }
+    }
+
+
+    func pi(_ req: Request) async throws -> Bool {
+        let spotifyResponse = try await req.client.get("https://api.spotify.com/v1/me/tracks?limit=50") { spotifyRequest in
+            spotifyRequest.headers.add(name: .authorization, value: "Bearer ")
+        }
+        let e = try spotifyResponse.content.decode(SpotifySavedTrackResponse.self)
+        return true
     }
 
     @Sendable
@@ -50,10 +61,10 @@ struct SpotifyController: RouteCollection {
             if (libStatus == nil) {
                 ws.close(code: .protocolError, promise: nil)
                 return
-            }
-
-            Task { @MainActor in
-                libStatus!.webSocket = ws
+            } else {
+                Task {
+                    libStatus!.webSocket = ws
+                }
             }
         }
     }
@@ -70,16 +81,17 @@ struct SpotifyController: RouteCollection {
         let queue = await UserLibraryProcessorQueue.shared
         if (queue.alreadyExists(userId: userId)) {
             throw Abort(.badRequest, reason: "User library already being processed")
-        }
+            return false
+        } else {
+            let libStatus = LibraryProcessingStatus(userId, spotifyToken, req.db, req.client)
+            queue.append(libStatus)
 
-        let libStatus = LibraryProcessingStatus(userId, spotifyToken, req.db, req.client)
-        queue.append(libStatus)
-
-        Task {
-            do {
-                try await UserLibraryProcessor(libStatus).process()
-            } catch {
-                print("Error inside processing task! \(error)")
+            Task {
+                do {
+                    try await UserLibraryProcessor(libStatus).process()
+                } catch {
+                    print("Error inside library processing task! \(error)")
+                }
             }
         }
 

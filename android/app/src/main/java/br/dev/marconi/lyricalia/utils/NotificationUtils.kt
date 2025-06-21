@@ -33,7 +33,7 @@ class NotificationUtils {
             createSpotifyChannel(notificationManager)
             val n = NotificationCompat.Builder(context, SPOTIFY_LINKING.CHANNEL_ID)
                 .setContentTitle("Conectando Spotify...")
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.lyircon_monochrome)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setStyle(NotificationCompat.BigTextStyle()
                     .bigText("Estamos te esperando conectar seu Spotify, avisaremos quando isso acabar ou se o processo falhar"))

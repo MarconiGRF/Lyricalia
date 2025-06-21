@@ -3,7 +3,8 @@
         {
             "type": "swift",
             "request": "launch",
-            "args": [],
+            "args": ["serve", "--hostname", "0.0.0.0", "--port", "8080"],
+            // "args": [],
             "cwd": "${workspaceFolder:api}/Sources/api",
             "name": "Debug api",
             "program": "${workspaceFolder:api}/.build/debug/api",

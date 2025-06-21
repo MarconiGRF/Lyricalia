@@ -41,7 +41,7 @@ struct UserLibraryProcessor: @unchecked Sendable {
                     songs.append(Song(
                         name: item.track.name,
                         artist: item.track.artists[0].name,
-                        spotifyId: item.track.id,
+                        spotifyId: item.track.id
                     ))
                 }
 

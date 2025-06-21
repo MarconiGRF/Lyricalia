@@ -16,4 +16,5 @@
     <string name="okay_confirm">Tudo bem</string>
     <string name="later_dismiss">Mais tarde</string>
     <string name="processing_hint">Pensando no seu gosto musical...</string>
+    <string name="loading_hint">Pensando sobre seu gosto musical...</string>
 </resources>

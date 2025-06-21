@@ -1,7 +1,5 @@
 package br.dev.marconi.lyricalia.activities
 
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.graphics.Typeface
@@ -11,6 +9,7 @@ import android.text.SpannableString
 import android.text.style.StyleSpan
 import android.util.Log
 import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +27,8 @@ import io.ktor.http.HttpMethod
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readReason
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.Float
 
@@ -35,19 +36,36 @@ class MenuActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMenuBinding
     private lateinit var viewModel: MenuViewModel
 
+    private var isGclefAnimated = false
     private var animator: ValueAnimator? = null
 
     override fun onStart() {
         super.onStart()
 
-        binding.isProcessingLibrary = true
+        showLoadingOverlays(false)
 
         if (viewModel.currentUser.value != null) {
             viewModel.currentUser.value!!.spotifyToken?.run {
                 setupGreeting()
                 setupLogoutButton()
                 followLibraryProcessing()
+                showLoadingOverlays(true)
             } ?: NavigationUtils.navigateToSpotifyLink(this)
+        }
+    }
+
+    suspend private fun animateGClef() {
+        if (!isGclefAnimated) {
+            isGclefAnimated = true
+
+            while (isGclefAnimated) {
+                delay(500)
+                if (binding.gclef.rotation == 22f) {
+                    binding.gclef.rotation = -15f
+                } else {
+                    binding.gclef.rotation = 22f
+                }
+            }
         }
     }
 
@@ -76,6 +94,22 @@ class MenuActivity : AppCompatActivity() {
         binding.animatedProgressBar.scaleX = 0f
     }
 
+    private fun showLoadingOverlays(visible: Boolean) {
+        if (visible) {
+            binding.animatedProgressBar.visibility = VISIBLE
+            binding.gclef.visibility = VISIBLE
+            binding.loadingHint.visibility = VISIBLE
+            binding.mainContent.visibility = INVISIBLE
+            lifecycleScope.launch { animateGClef() }
+        } else {
+            binding.animatedProgressBar.visibility = INVISIBLE
+            binding.gclef.visibility = INVISIBLE
+            binding.loadingHint.visibility = INVISIBLE
+            binding.mainContent.visibility = VISIBLE
+            isGclefAnimated = false
+        }
+    }
+
     private fun followLibraryProcessing() {
         lifecycleScope.launch {
             viewModel.httpClient.webSocket(HttpMethod.Get, viewModel.serverIp, 8080, "/spotify/library") {
@@ -83,20 +117,22 @@ class MenuActivity : AppCompatActivity() {
                     send(Frame.Text(viewModel.currentUser.value!!.id!!))
 
                     for (frame in incoming) {
+                        showLoadingOverlays(true)
                         if (frame is Frame.Text) {
+                            Log.d("IF1001_P3_LYRICALIA", "Websocket Frame Received -> ${String(frame.data)}")
                             val percentage = String(frame.data).toFloat()
                             updateProgressBar(percentage)
                         }
                         else if (frame is Frame.Close) {
                             Log.d("IF1001_P3_LYRICALIA", "Websocket closed: ${frame.readReason()}")
-                            Toast.makeText(applicationContext, "Websocket closed: ${frame.readReason()}", Toast.LENGTH_LONG).show()
                         }
                     }
                 } catch (ex: Exception) {
                     Log.e("IF1001_P3_LYRICALIA", "Websocket exception: $ex")
                 } finally {
                     if (closeReason.await()?.code == CloseReason.Codes.NORMAL.code) {
-//                        binding.processingInfoContainer.visibility = INVISIBLE
+                        showLoadingOverlays(false)
+                        binding.animatedProgressBar.visibility = INVISIBLE
                     }
                 }
             }
