@@ -43,6 +43,7 @@ class MenuViewModel(
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 class MenuViewModelFactory(
     private val filesDir: File
 ): ViewModelProvider.Factory {

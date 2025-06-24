@@ -3,7 +3,7 @@ import Vapor
 class MatchStateManager: @unchecked Sendable {
     static let instance: MatchStateManager = { return MatchStateManager() }()
 
-    private var state: [String : Match] = [:]
+    private var matches: [String : Match] = [:]
 
     private var artists = [
         "ImagineDragons",
@@ -11,14 +11,32 @@ class MatchStateManager: @unchecked Sendable {
         "LadyGaga",
         "Beyonce",
         "TaylorSwift",
-        "TaylorSwift",
+        "Foals",
+        "Lana",
+        "Lorde",
+        "Muse",
+        "OliviaRodrigo",
+        "SabrinaCarpenter"
+    ]
+    private var adjectives = [
+        "IsAwesome",
+        "IsCrazy",
+        "Legendary",
+        "Flop",
+        "Sad",
+        "GlobalHit",
+        "GuiltyPleasure",
+        "NotForMe",
+        "Monarchy",
+        "Dinasty",
+        "Repubic",
     ]
 
     func create(songLimit: Int) -> String {
-        let uuid = UUID().uuidString
         let match = Match(songLimit: songLimit)
+        let id = "\(artists.randomElement()!)\(adjectives.randomElement()!)"
 
-        state[uuid] = match
-        return uuid
+        matches[id] = match
+        return id
     }
 }

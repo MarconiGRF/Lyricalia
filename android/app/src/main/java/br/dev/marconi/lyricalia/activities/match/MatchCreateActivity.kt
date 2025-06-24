@@ -1,14 +1,42 @@
 package br.dev.marconi.lyricalia.activities.match
 
+import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchCreateBinding
+import br.dev.marconi.lyricalia.viewModels.MatchCreateViewModel
+import br.dev.marconi.lyricalia.viewModels.MatchCreateViewModelFactory
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MatchCreateActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchCreateBinding
+    private lateinit var viewModel: MatchCreateViewModel
+
+    private var isGclefAnimating = false
+    private suspend fun animateGClef() {
+        if (!isGclefAnimating) {
+            isGclefAnimating = true
+
+            while (isGclefAnimating) {
+                delay(500)
+                if (binding.gclef.rotation == 22f) {
+                    binding.gclef.rotation = -15f
+                } else {
+                    binding.gclef.rotation = 22f
+                }
+            }
+        }
+    }
 
     override fun onStart() {
         super.onStart()
@@ -17,8 +45,8 @@ class MatchCreateActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-//        val vmFactory = MenuViewModelFactory(applicationContext.filesDir)
-//        viewModel = ViewModelProvider(this, vmFactory)[MenuViewModel::class.java]
+        val vmFactory = MatchCreateViewModelFactory(applicationContext.filesDir)
+        viewModel = ViewModelProvider(this, vmFactory)[MatchCreateViewModel::class.java]
 
         binding = ActivityMatchCreateBinding.inflate(layoutInflater)
         setupMatchCreateActivity()
@@ -35,6 +63,45 @@ class MatchCreateActivity: AppCompatActivity() {
 
         binding.backButton.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
+        }
+
+        binding.createMatchButton.setOnClickListener {
+            var songLimit = binding.songLimitEditText.text.toString().toInt()
+            if (songLimit == 0) songLimit++
+
+            createMatch(songLimit)
+        }
+    }
+
+    private fun createMatch(songLimit: Int) {
+        showLoadingOverlays(true)
+        lifecycleScope.launch {
+            var matchId: String
+            try {
+                matchId = viewModel.createMatch(songLimit)
+                Log.d("IF1001_P3_LYRICALIA", "Successfully created match, id is $matchId")
+            }
+            catch (_: Exception) { showLoadingOverlays(false, true) }
+        }
+    }
+
+    private fun showLoadingOverlays(shouldBeShown: Boolean, isError: Boolean = false) {
+        if (shouldBeShown) {
+            binding.mainContent.visibility = INVISIBLE
+
+            binding.gclef.visibility = VISIBLE
+            lifecycleScope.launch { animateGClef() }
+
+            binding.loadingHint.visibility = VISIBLE
+            binding.loadingHint.text = resources.getString(R.string.loading_hint_simpler)
+        } else {
+            binding.mainContent.visibility = VISIBLE
+
+            binding.gclef.visibility = INVISIBLE
+            isGclefAnimating = false
+
+            if (isError) binding.loadingHint.text = resources.getString(R.string.error_match_creation)
+            else binding.loadingHint.visibility = INVISIBLE
         }
     }
 }

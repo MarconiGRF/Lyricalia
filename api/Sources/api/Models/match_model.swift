@@ -22,6 +22,7 @@ class Match: @unchecked Sendable {
     var players: [PlayingUser] = []
     var commonSongs: [Song] = []
     var chosenSongs: [Song] = []
+    var hostId: UUID?
     var songLimit: Int
     var inProgress: Bool = false {
         didSet { Task {

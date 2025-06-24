@@ -22,6 +22,7 @@ class SpotifyLinkViewModel(
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 class SpotifyLinkViewModelFactory(
     private val filesDir: File
 ): ViewModelProvider.Factory {

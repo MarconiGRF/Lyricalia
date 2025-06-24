@@ -72,7 +72,7 @@ class MenuActivity : AppCompatActivity() {
         }
     }
 
-    suspend private fun animateGClef() {
+    private suspend fun animateGClef() {
         if (!isGclefAnimated) {
             isGclefAnimated = true
 
