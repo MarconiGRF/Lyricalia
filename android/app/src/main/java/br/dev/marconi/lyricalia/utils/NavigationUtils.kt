@@ -6,6 +6,7 @@ import android.content.Intent
 import br.dev.marconi.lyricalia.activities.MainActivity
 import br.dev.marconi.lyricalia.activities.MenuActivity
 import br.dev.marconi.lyricalia.activities.SpotifyLinkActivity
+import br.dev.marconi.lyricalia.activities.match.MatchCreateActivity
 
 class NavigationUtils {
     companion object {
@@ -19,6 +20,10 @@ class NavigationUtils {
 
         fun navigateToMenu(packageContext: Context) {
             navigateToActivity(packageContext, MenuActivity::class.java, canGoBack = false)
+        }
+
+        fun navigateToCreateMatch(packageContext: Context) {
+            navigateToActivity(packageContext, MatchCreateActivity::class.java, canGoBack = true)
         }
 
         private fun navigateToActivity(

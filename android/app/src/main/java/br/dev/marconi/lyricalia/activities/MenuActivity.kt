@@ -39,6 +39,13 @@ class MenuActivity : AppCompatActivity() {
     private var isGclefAnimated = false
     private var animator: ValueAnimator? = null
 
+    override fun onResume() {
+        super.onResume()
+
+        viewModel.currentGreeting = viewModel.greetingPhrases.random()
+        setupGreeting()
+    }
+
     override fun onStart() {
         super.onStart()
 
@@ -46,11 +53,22 @@ class MenuActivity : AppCompatActivity() {
 
         if (viewModel.currentUser.value != null) {
             viewModel.currentUser.value!!.spotifyToken?.run {
-                setupGreeting()
-                setupLogoutButton()
+                setupMenuUI()
+            } ?: NavigationUtils.navigateToSpotifyLink(this)
+
+            if (!viewModel.currentUser.value!!.isLibraryProcessed) {
                 followLibraryProcessing()
                 showLoadingOverlays(true)
-            } ?: NavigationUtils.navigateToSpotifyLink(this)
+            }
+        }
+    }
+
+    private fun setupMenuUI() {
+        setupGreeting()
+        setupLogoutButton()
+
+        binding.createMatchButton.setOnClickListener {
+            NavigationUtils.navigateToCreateMatch(this)
         }
     }
 
@@ -139,7 +157,6 @@ class MenuActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun setupMenuActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)

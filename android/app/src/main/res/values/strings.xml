@@ -17,4 +17,10 @@
     <string name="later_dismiss">Mais tarde</string>
     <string name="processing_hint">Pensando no seu gosto musical...</string>
     <string name="loading_hint">Pensando sobre seu gosto musical...</string>
+    <string name="new_match">Nova partida</string>
+    <string name="loading_hint_simpler">Pensando...</string>
+    <string name="song_limit">Limite de músicas:</string>
+    <string name="song_limit_about">O limite de músicas não garante um número mínimo de músicas, pois os integrantes da partida podem não ter tantas músicas em comum.</string>
+    <string name="create">Criar</string>
+    <string name="join_match">Entrar em partida</string>
 </resources>
