@@ -184,6 +184,8 @@ class SpotifyLinkActivity : AppCompatActivity() {
     }
 
     private fun verifyAuthenticity(authorizationCode: String) {
+        val activityContext = this
+
         try {
             var credentials: SpotifyCredentialsEntity
             lifecycleScope.launch(Dispatchers.IO) {
@@ -201,7 +203,7 @@ class SpotifyLinkActivity : AppCompatActivity() {
                 val dispatch = async { SpotifyUtils.dispatchProcessUserLibrary(applicationContext) }
                 dispatch.await()
 
-                NavigationUtils.navigateToMenu(applicationContext)
+                NavigationUtils.navigateToMenu(activityContext)
             }
         } catch (ex: Exception) {
             Toast.makeText(this, "Erro ao autenticar: ${ex.message}", Toast.LENGTH_LONG).show()

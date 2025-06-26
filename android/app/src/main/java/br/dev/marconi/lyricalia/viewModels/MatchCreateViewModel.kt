@@ -30,7 +30,7 @@ class MatchCreateViewModel(
 
     init {
         val serverIp = StorageUtils(filesDir).retrieveServerIp()
-        this.baseUrl = "http://$serverIp:8080"
+        this.baseUrl = "$serverIp"
     }
 
     suspend fun createMatch(songLimit: Int): String {

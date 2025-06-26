@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun setupServerIp() {
-        binding.serverIp.setText("10.0.2.2")
+        binding.serverIp.setText("http://10.0.2.2:8080")
     }
 
     private fun showLongToast(text: String) {
@@ -82,11 +82,10 @@ class MainActivity : AppCompatActivity() {
                 storageUtils.saveUser(user)
 
                 navigateAccordingToUserState()
-            } catch (e: Exception) {
-                showLongToast("Erro ao entrar: " + e.message.toString())
+            } catch (ex: Exception) {
+                showLongToast("Erro ao entrar: " + ex.message.toString())
                 binding.isLoading = false
             }
-
         }
     }
 }

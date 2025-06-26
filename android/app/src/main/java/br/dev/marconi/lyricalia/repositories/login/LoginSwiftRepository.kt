@@ -26,7 +26,7 @@ class LoginSwiftRepository : LoginRepository {
 
     constructor(context: Context) {
         this.serverIp = StorageUtils(context.filesDir).retrieveServerIp()
-        this.baseUrl = "http://$serverIp:8080"
+        this.baseUrl = "$serverIp"
     }
 
     override suspend fun createUser(name: String, username: String): User {

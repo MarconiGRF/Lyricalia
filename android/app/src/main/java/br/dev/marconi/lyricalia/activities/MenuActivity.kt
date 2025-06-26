@@ -1,7 +1,6 @@
 package br.dev.marconi.lyricalia.activities
 
 import android.animation.ValueAnimator
-import android.annotation.SuppressLint
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
@@ -27,7 +26,6 @@ import io.ktor.http.HttpMethod
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readReason
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.Float
@@ -68,7 +66,7 @@ class MenuActivity : AppCompatActivity() {
         setupLogoutButton()
 
         binding.createMatchButton.setOnClickListener {
-            NavigationUtils.navigateToCreateMatch(this)
+            NavigationUtils.navigateToMatchCreate(this)
         }
     }
 

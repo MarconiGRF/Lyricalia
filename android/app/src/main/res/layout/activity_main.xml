@@ -83,7 +83,7 @@
                 android:minHeight="48dp"
                 android:layout_height="wrap_content"
                 android:ems="10"
-                android:inputType="phone"
+                android:inputType="text"
                 android:hint="@string/server_ip"
                 android:textColor="@color/lyGray"
                 android:fontFamily="@font/domine"

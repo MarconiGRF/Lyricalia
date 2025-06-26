@@ -45,6 +45,9 @@
         <activity
             android:name=".activities.match.MatchCreateActivity"
             android:exported="true"/>
+        <activity
+            android:name=".activities.match.MatchWaitingActivity"
+            android:exported="true"/>
     </application>
 
 </manifest>

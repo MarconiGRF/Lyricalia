@@ -50,7 +50,7 @@ class SpotifyUtils {
             try {
                 val serverIp = StorageUtils(context.filesDir).retrieveServerIp()
 
-                var response = client.post("http://$serverIp:8080/spotify/auth") {
+                var response = client.post("$serverIp/spotify/auth") {
                     contentType(ContentType.Application.Json)
                     setBody(buildCredentials(authorizationCode))
                 }
@@ -73,7 +73,7 @@ class SpotifyUtils {
             val user = StorageUtils(context.filesDir).retrieveUser()
 
             try {
-                client.post("http://$serverIp:8080/spotify/library") {
+                client.post("$serverIp/spotify/library") {
                     contentType(ContentType.Application.Json)
                     setBody(user)
                 }

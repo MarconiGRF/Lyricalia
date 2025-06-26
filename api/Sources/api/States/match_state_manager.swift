@@ -8,7 +8,7 @@ class MatchStateManager: @unchecked Sendable {
     private var artists = [
         "ImagineDragons",
         "Maneskin",
-        "LadyGaga",
+        "Gaga",
         "Beyonce",
         "TaylorSwift",
         "Foals",
@@ -25,7 +25,6 @@ class MatchStateManager: @unchecked Sendable {
         "Flop",
         "Sad",
         "GlobalHit",
-        "GuiltyPleasure",
         "NotForMe",
         "Monarchy",
         "Dinasty",

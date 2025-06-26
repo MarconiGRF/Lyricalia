@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchCreateBinding
+import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.viewModels.MatchCreateViewModel
 import br.dev.marconi.lyricalia.viewModels.MatchCreateViewModelFactory
 import kotlinx.coroutines.delay
@@ -75,11 +76,13 @@ class MatchCreateActivity: AppCompatActivity() {
 
     private fun createMatch(songLimit: Int) {
         showLoadingOverlays(true)
+
+        val activityContext = this
         lifecycleScope.launch {
             var matchId: String
             try {
                 matchId = viewModel.createMatch(songLimit)
-                Log.d("IF1001_P3_LYRICALIA", "Successfully created match, id is $matchId")
+                NavigationUtils.navigateToMatchWaiting(activityContext, matchId, true)
             }
             catch (_: Exception) { showLoadingOverlays(false, true) }
         }

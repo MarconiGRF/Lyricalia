@@ -155,6 +155,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/joinMatchButton"
                 android:layout_marginTop="40dp" />
+            <!-- TODO: Maybe use icons on buttons to give more appeal to the game-->
             <Button
                 android:id="@+id/joinMatchButton"
                 android:minWidth="200dp"
