@@ -5,5 +5,6 @@
     <color name="lyGreen">#FF61E786</color>
     <color name="lyGray">#FF5A5766</color>
     <color name="lyDarkerGray">#FF48435C</color>
+    <color name="lyTransparentDarkerGray">#BF48435C</color>
     <color name="lyIndigo">#FF9792E3</color>
 </resources>

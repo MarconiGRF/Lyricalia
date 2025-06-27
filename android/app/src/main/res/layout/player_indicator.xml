@@ -13,10 +13,11 @@
         app:layout_constraintEnd_toEndOf="@id/playerGlyphContainer"
         app:layout_constraintTop_toTopOf="@id/playerGlyphContainer"
         app:layout_constraintBottom_toBottomOf="@id/playerGlyphContainer"
-        android:textSize="34sp"
-        android:text="S"
+        android:textSize="28sp"
+        android:text="L"
         android:translationZ="1dp"
-        android:fontFamily="@font/domine"/>
+        android:fontFamily="@font/domine"
+        android:textColor="@color/lyWhite"/>
     <ImageView
         android:id="@+id/playerGlyphContainer"
         app:layout_constraintStart_toStartOf="parent"
@@ -24,7 +25,7 @@
         android:layout_width="47dp"
         android:layout_height="47dp"
         android:src="@drawable/full_circle"
-        app:tint="#FF00FFFF"/>
+        app:tint="#FF48435C"/>
     <View
         android:layout_width="3dp"
         android:layout_height="0dp"
@@ -32,5 +33,5 @@
         app:layout_constraintStart_toStartOf="@id/playerGlyphContainer"
         app:layout_constraintEnd_toEndOf="@id/playerGlyphContainer"
         app:layout_constraintTop_toBottomOf="@id/playerGlyphContainer"
-        android:background="@color/lyDarkerGray"/>
+        android:background="@color/lyTransparentDarkerGray"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
