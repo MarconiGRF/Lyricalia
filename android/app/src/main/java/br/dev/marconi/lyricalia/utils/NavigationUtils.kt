@@ -7,6 +7,7 @@ import br.dev.marconi.lyricalia.activities.MainActivity
 import br.dev.marconi.lyricalia.activities.MenuActivity
 import br.dev.marconi.lyricalia.activities.SpotifyLinkActivity
 import br.dev.marconi.lyricalia.activities.match.MatchCreateActivity
+import br.dev.marconi.lyricalia.activities.match.MatchJoinActivity
 import br.dev.marconi.lyricalia.activities.match.MatchWaitingActivity
 
 class NavigationUtils {
@@ -27,11 +28,15 @@ class NavigationUtils {
             navigateToActivity(packageContext, MatchCreateActivity::class.java, canGoBack = true)
         }
 
+        fun navigateToMatchJoin(packageContext: Context) {
+            navigateToActivity(packageContext, MatchJoinActivity::class.java, canGoBack = true)
+        }
+
         fun navigateToMatchWaiting(packageContext: Context, matchId: String, isHost: Boolean) {
             navigateToActivity(
                 packageContext,
                 MatchWaitingActivity::class.java,
-                canGoBack = true,
+                canGoBack = false,
                 matchId,
                 isHost)
         }

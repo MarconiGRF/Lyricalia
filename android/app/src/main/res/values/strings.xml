@@ -23,6 +23,10 @@
     <string name="create">Criar</string>
     <string name="join_match">Entrar em partida</string>
     <string name="error_match_creation">Não foi possível criar a partida :( tente novamente</string>
+    <string name="error_match_not_found">Partida não encontrada</string>
     <string name="host_join_hint">Compartilhe o nome da sala com seus amigos para jogarem juntos!</string>
     <string name="play">Jogar</string>
+    <string name="join">Entrar</string>
+    <string name="error_match_cannot_join">Não foi possível entrar na sala :(</string>
+    <string name="matchId">Nome da sala</string>
 </resources>

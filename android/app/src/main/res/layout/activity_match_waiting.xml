@@ -115,21 +115,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/joinHint"
                 android:layout_marginTop="60dp"/>
-            <Button
-                android:id="@+id/deleteppl"
-                android:minWidth="200dp"
-                android:layout_width="wrap_content"
-                android:minHeight="50dp"
-                android:layout_height="wrap_content"
-                android:text="deleteppl"
-                android:fontFamily="@font/domine"
-                android:textStyle="bold"
-                android:textColor="@color/Black"
-                android:backgroundTint="@color/lyGreen"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/createMatchButton"
-                android:layout_marginTop="60dp"/>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout

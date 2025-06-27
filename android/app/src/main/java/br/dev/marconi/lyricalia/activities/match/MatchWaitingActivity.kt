@@ -45,7 +45,7 @@ class MatchWaitingActivity: AppCompatActivity() {
 
         otherPlayersLayout = binding.otherPlayers
         binding.createMatchButton.setOnClickListener { addPlayerOnView() }
-        binding.deleteppl.setOnClickListener { removePlayer(players.values.random()) }
+
         val layoutTransition = LayoutTransition()
         layoutTransition.enableTransitionType(LayoutTransition.APPEARING)
         layoutTransition.enableTransitionType(LayoutTransition.CHANGE_APPEARING)

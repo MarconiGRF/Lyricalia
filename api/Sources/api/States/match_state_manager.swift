@@ -38,4 +38,6 @@ class MatchStateManager: @unchecked Sendable {
         matches[id] = match
         return id
     }
+
+    func exists(_ matchId: String) -> Bool { matches[matchId] != nil }
 }

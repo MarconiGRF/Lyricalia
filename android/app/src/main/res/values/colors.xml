@@ -2,6 +2,7 @@
 <resources>
     <color name="Black">#FF000000</color>
     <color name="lyWhite">#FFEDFFEC</color>
+    <color name="lyRed">#FFE86161</color>
     <color name="lyGreen">#FF61E786</color>
     <color name="lyGray">#FF5A5766</color>
     <color name="lyDarkerGray">#FF48435C</color>
