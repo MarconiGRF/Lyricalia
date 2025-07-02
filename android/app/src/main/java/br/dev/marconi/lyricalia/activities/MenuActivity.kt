@@ -126,9 +126,13 @@ class MenuActivity : AppCompatActivity() {
     private fun finishLoading(closingCode: Int) {
         val normalClosure = 1000
 
-        if (closingCode == normalClosure) {
-            showLoadingOverlays(false)
-            binding.animatedProgressBar.visibility = INVISIBLE
+        showLoadingOverlays(false)
+        binding.animatedProgressBar.visibility = INVISIBLE
+
+        if (closingCode != normalClosure) {
+            binding.mainContent.visibility = INVISIBLE
+            binding.loadingHint.visibility = VISIBLE
+            binding.loadingHint.text = "Não foi possível falar com o backend, reabra o app :("
         }
     }
 
@@ -137,10 +141,11 @@ class MenuActivity : AppCompatActivity() {
         try {
             ws.connect(
                 viewModel.serverIp,
+                viewModel.currentUser.value!!.id!!,
+                lifecycleScope,
                 { updateProgressBar(it.toFloat()) },
                 { finishLoading(it) }
             )
-            ws.send(viewModel.currentUser.value!!.id!!)
         } catch (ex: Exception) {
             Toast.makeText(this, "Falha ao checar progresso: ${ex.message}", Toast.LENGTH_LONG).show()
         }

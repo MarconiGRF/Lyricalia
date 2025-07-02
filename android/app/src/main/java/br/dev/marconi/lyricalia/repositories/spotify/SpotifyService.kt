@@ -1,4 +1,4 @@
-package br.dev.marconi.lyricalia.repositories.spotify.library
+package br.dev.marconi.lyricalia.repositories.spotify
 
 import br.dev.marconi.lyricalia.repositories.spotify.credentials.SpotifyCredentialsEntity
 import br.dev.marconi.lyricalia.repositories.user.User
@@ -11,5 +11,5 @@ interface SpotifyService {
     suspend fun exchangeTokens(@Body credentials: SpotifyCredentialsEntity): Response<SpotifyCredentialsEntity>
 
     @POST("spotify/library")
-    suspend fun dispatchLibraryProcessor(@Body user: User): Response<User>
+    suspend fun dispatchLibraryProcessor(@Body user: User): Response<Boolean>
 }

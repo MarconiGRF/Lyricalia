@@ -7,7 +7,7 @@ import br.dev.marconi.lyricalia.repositories.match.CreateMatchRequest
 import br.dev.marconi.lyricalia.repositories.match.MatchService
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import retrofit2.Retrofit
-import retrofit2.converter.jackson.JacksonConverterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 
 class MatchCreateViewModel(
@@ -23,7 +23,7 @@ class MatchCreateViewModel(
     suspend fun createMatch(songLimit: Int): String {
         val retrofit = Retrofit.Builder()
             .baseUrl(baseUrl)
-            .addConverterFactory(JacksonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
 
         val service = retrofit.create<MatchService>(MatchService::class.java)

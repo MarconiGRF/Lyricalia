@@ -5,12 +5,12 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import br.dev.marconi.lyricalia.repositories.spotify.credentials.SpotifyCredentialsDatabase
 import br.dev.marconi.lyricalia.repositories.spotify.credentials.SpotifyCredentialsEntity
-import br.dev.marconi.lyricalia.repositories.spotify.library.SpotifyService
+import br.dev.marconi.lyricalia.repositories.spotify.SpotifyService
 import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationRequest
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import retrofit2.Retrofit
-import retrofit2.converter.jackson.JacksonConverterFactory
+import retrofit2.converter.gson.GsonConverterFactory
 
 class SpotifyUtils {
     companion object {
@@ -37,7 +37,7 @@ class SpotifyUtils {
             val serverIp = StorageUtils(context.filesDir).retrieveServerIp()
             val retrofit = Retrofit.Builder()
                 .baseUrl(serverIp)
-                .addConverterFactory(JacksonConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
                 .build()
             val service = retrofit.create<SpotifyService>(SpotifyService::class.java)
 
@@ -59,7 +59,7 @@ class SpotifyUtils {
             val serverIp = StorageUtils(context.filesDir).retrieveServerIp()
             val retrofit = Retrofit.Builder()
                 .baseUrl(serverIp)
-                .addConverterFactory(JacksonConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
                 .build()
             val service = retrofit.create<SpotifyService>(SpotifyService::class.java)
 

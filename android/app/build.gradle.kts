@@ -59,7 +59,7 @@ dependencies {
     implementation(libs.spotify.auth)
     implementation(libs.okhttp)
     implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.jackson)
+    implementation(libs.retrofit.converter.gson)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

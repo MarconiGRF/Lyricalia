@@ -90,6 +90,8 @@
             android:textSize="22sp"
             android:text="@string/loading_hint"
             android:layout_marginTop="10dp"
+            android:paddingHorizontal="5dp"
+            android:textAlignment="center"
             app:layout_constraintTop_toBottomOf="@id/gclef"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
