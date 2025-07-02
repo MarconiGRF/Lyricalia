@@ -3,25 +3,16 @@ package br.dev.marconi.lyricalia.viewModels
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import br.dev.marconi.lyricalia.repositories.match.CreateMatchRequest
+import br.dev.marconi.lyricalia.repositories.match.MatchService
 import br.dev.marconi.lyricalia.utils.StorageUtils
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.request.get
-import io.ktor.client.statement.HttpResponse
-import io.ktor.serialization.kotlinx.json.json
+import retrofit2.Retrofit
+import retrofit2.converter.jackson.JacksonConverterFactory
 import java.io.File
 
 class MatchJoinViewModel(
     private val filesDir: File
 ): ViewModel() {
-    private val httpClient = HttpClient {
-        install(WebSockets)
-        install(ContentNegotiation) {
-            json()
-        }
-    }
     private val baseUrl: String
 
     init {
@@ -30,15 +21,17 @@ class MatchJoinViewModel(
     }
 
     suspend fun joinMatch(matchId: String): Boolean {
-        var response: HttpResponse
-        try {
-            response = httpClient.get("$baseUrl/match/$matchId")
-            if (response.status.value != 200) {
-                throw Exception("Status code ${response.status.value} from server - ${response.body<String>()}")
-            }
-        } catch (ex: Exception) {
-            Log.e("IF1001_P3_LYRICALIA", "Could not create match due to -> ${ex.message}")
-            throw ex
+        val retrofit = Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .addConverterFactory(JacksonConverterFactory.create())
+            .build()
+
+        val service = retrofit.create<MatchService>(MatchService::class.java)
+
+        val response = service.joinMatch(matchId)
+        if (!response.isSuccessful) {
+            Log.e("IF1001_P3_LYRICALIA", "Could not join match due to -> ${response.errorBody()}")
+            throw Error("Status ${response.code()}")
         }
 
         return true

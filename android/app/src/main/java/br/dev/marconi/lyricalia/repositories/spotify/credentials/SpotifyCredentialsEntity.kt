@@ -1,4 +1,4 @@
-package br.dev.marconi.lyricalia.repositories.spotifyCredentials
+package br.dev.marconi.lyricalia.repositories.spotify.credentials
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

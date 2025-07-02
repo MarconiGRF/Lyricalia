@@ -17,15 +17,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMenuBinding
+import br.dev.marconi.lyricalia.repositories.spotify.library.SpotifyLibraryWebSocket
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import br.dev.marconi.lyricalia.viewModels.MenuViewModel
 import br.dev.marconi.lyricalia.viewModels.MenuViewModelFactory
-import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.http.HttpMethod
-import io.ktor.websocket.CloseReason
-import io.ktor.websocket.Frame
-import io.ktor.websocket.readReason
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.Float
@@ -61,6 +57,18 @@ class MenuActivity : AppCompatActivity() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val vmFactory = MenuViewModelFactory(applicationContext.filesDir)
+        viewModel = ViewModelProvider(this, vmFactory)[MenuViewModel::class.java]
+
+        binding = ActivityMenuBinding.inflate(layoutInflater)
+        setupMenuActivity()
+
+        binding.animatedProgressBar.scaleX = 0f
+    }
+
     private fun setupMenuUI() {
         setupGreeting()
         setupLogoutButton()
@@ -85,31 +93,6 @@ class MenuActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateProgressBar(percentage: Float) {
-        animator = ValueAnimator.ofFloat(binding.animatedProgressBar.scaleX, percentage).apply {
-            duration = 250
-
-            addUpdateListener { animator ->
-                val scale = animator.animatedValue as Float
-                binding.animatedProgressBar.scaleX = scale
-            }
-
-            start()
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val vmFactory = MenuViewModelFactory(applicationContext.filesDir)
-        viewModel = ViewModelProvider(this, vmFactory)[MenuViewModel::class.java]
-
-        binding = ActivityMenuBinding.inflate(layoutInflater)
-        setupMenuActivity()
-
-        binding.animatedProgressBar.scaleX = 0f
-    }
-
     private fun showLoadingOverlays(visible: Boolean) {
         if (visible) {
             binding.animatedProgressBar.visibility = VISIBLE
@@ -126,32 +109,40 @@ class MenuActivity : AppCompatActivity() {
         }
     }
 
-    private fun followLibraryProcessing() {
-        lifecycleScope.launch {
-            viewModel.httpClient.webSocket(HttpMethod.Get, viewModel.serverIp, 8080, "/spotify/library") {
-                try {
-                    send(Frame.Text(viewModel.currentUser.value!!.id!!))
+    private fun updateProgressBar(percentage: Float): Unit {
 
-                    for (frame in incoming) {
-                        showLoadingOverlays(true)
-                        if (frame is Frame.Text) {
-                            Log.d("IF1001_P3_LYRICALIA", "Websocket Frame Received -> ${String(frame.data)}")
-                            val percentage = String(frame.data).toFloat()
-                            updateProgressBar(percentage)
-                        }
-                        else if (frame is Frame.Close) {
-                            Log.d("IF1001_P3_LYRICALIA", "Websocket closed: ${frame.readReason()}")
-                        }
-                    }
-                } catch (ex: Exception) {
-                    Log.e("IF1001_P3_LYRICALIA", "Websocket exception: $ex")
-                } finally {
-                    if (closeReason.await()?.code == CloseReason.Codes.NORMAL.code) {
-                        showLoadingOverlays(false)
-                        binding.animatedProgressBar.visibility = INVISIBLE
-                    }
-                }
+        animator = ValueAnimator.ofFloat(binding.animatedProgressBar.scaleX, percentage).apply {
+            duration = 250
+
+            addUpdateListener { animator ->
+                val scale = animator.animatedValue as Float
+                binding.animatedProgressBar.scaleX = scale
             }
+
+            start()
+        }
+    }
+
+    private fun finishLoading(closingCode: Int) {
+        val normalClosure = 1000
+
+        if (closingCode == normalClosure) {
+            showLoadingOverlays(false)
+            binding.animatedProgressBar.visibility = INVISIBLE
+        }
+    }
+
+    private fun followLibraryProcessing() {
+        val ws = SpotifyLibraryWebSocket()
+        try {
+            ws.connect(
+                viewModel.serverIp,
+                { updateProgressBar(it.toFloat()) },
+                { finishLoading(it) }
+            )
+            ws.send(viewModel.currentUser.value!!.id!!)
+        } catch (ex: Exception) {
+            Toast.makeText(this, "Falha ao checar progresso: ${ex.message}", Toast.LENGTH_LONG).show()
         }
     }
 

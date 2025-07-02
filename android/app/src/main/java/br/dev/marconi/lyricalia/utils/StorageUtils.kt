@@ -3,6 +3,7 @@ package br.dev.marconi.lyricalia.utils
 import android.content.Context
 import android.util.Log
 import br.dev.marconi.lyricalia.repositories.user.User
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 

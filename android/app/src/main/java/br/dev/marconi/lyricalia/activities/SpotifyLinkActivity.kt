@@ -2,7 +2,6 @@ package br.dev.marconi.lyricalia.activities
 
 import android.Manifest
 import android.app.NotificationManager
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
@@ -17,20 +16,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.datastore.core.Storage
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivitySpotifyLinkBinding
-import br.dev.marconi.lyricalia.repositories.spotifyCredentials.SpotifyCredentialsEntity
-import br.dev.marconi.lyricalia.repositories.user.User
+import br.dev.marconi.lyricalia.repositories.spotify.credentials.SpotifyCredentialsEntity
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.utils.NotificationUtils
 import br.dev.marconi.lyricalia.utils.SpotifyUtils
-import br.dev.marconi.lyricalia.utils.SpotifyUtils.Companion.REQUEST_CODE
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import br.dev.marconi.lyricalia.viewModels.SpotifyLinkViewModel
 import br.dev.marconi.lyricalia.viewModels.SpotifyLinkViewModelFactory
-import com.spotify.sdk.android.auth.AuthorizationClient
 import com.spotify.sdk.android.auth.AuthorizationResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async

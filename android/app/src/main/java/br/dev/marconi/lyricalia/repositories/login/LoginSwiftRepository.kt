@@ -3,44 +3,29 @@ package br.dev.marconi.lyricalia.repositories.login
 import android.content.Context
 import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.StorageUtils
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
+import retrofit2.Retrofit
+import retrofit2.converter.jackson.JacksonConverterFactory
 
-class LoginSwiftRepository : LoginRepository {
-    private val client = HttpClient(CIO) {
-        expectSuccess = true
-        install(ContentNegotiation) {
-            json()
-        }
-    }
-    private var baseUrl: String
+class LoginSwiftRepository {
     private var serverIp: String
 
     constructor(context: Context) {
         this.serverIp = StorageUtils(context.filesDir).retrieveServerIp()
-        this.baseUrl = "$serverIp"
     }
 
-    override suspend fun createUser(name: String, username: String): User {
-        var response: HttpResponse
-        try {
-            response = client.post("$baseUrl/users") {
-                contentType(ContentType.Application.Json)
-                val userDto = User(name, username)
-                setBody(userDto)
-            }
-        } catch (e: Exception) {
-            throw e
-        }
+    suspend fun createUser(name: String, username: String): User {
+        val retrofit = Retrofit.Builder()
+            .baseUrl(serverIp)
+            .addConverterFactory(JacksonConverterFactory.create())
+            .build()
 
-        return response.body<User>()
+        val service = retrofit.create<LoginService>(LoginService::class.java)
+
+        val response = service.createUser(User(name, username))
+        if (response.isSuccessful) {
+            return response.body()!!
+        } else {
+            throw Error("Status ${response.code()}")
+        }
     }
 }

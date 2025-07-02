@@ -6,8 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import br.dev.marconi.lyricalia.repositories.lyric.LyricDatabase
 import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.StorageUtils
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.WebSockets
 import java.io.File
 
 class MenuViewModel(
@@ -33,8 +31,6 @@ class MenuViewModel(
         Pair("I'm your biggest fan, I'll follow you until you love me <USER>! 🎶", "Lady Gaga - Paparazzi"),
     )
     var currentGreeting = greetingPhrases.random()
-
-    val httpClient = HttpClient { install(WebSockets) }
     lateinit var lyricDb: LyricDatabase
 
     init {
