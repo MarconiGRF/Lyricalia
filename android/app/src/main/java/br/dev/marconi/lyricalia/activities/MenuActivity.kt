@@ -76,6 +76,10 @@ class MenuActivity : AppCompatActivity() {
         binding.createMatchButton.setOnClickListener {
             NavigationUtils.navigateToMatchCreate(this)
         }
+
+        binding.joinMatchButton.setOnClickListener {
+            NavigationUtils.navigateToMatchJoin(this)
+        }
     }
 
     private suspend fun animateGClef() {

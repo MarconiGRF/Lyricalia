@@ -48,10 +48,10 @@ class MatchJoinActivity: AppCompatActivity() {
         viewModel = ViewModelProvider(this, vmFactory)[MatchJoinViewModel::class.java]
 
         binding = ActivityMatchJoinBinding.inflate(layoutInflater)
-        setupMatchCreateActivity()
+        setupMatchJoinActivity()
     }
 
-    private fun setupMatchCreateActivity() {
+    private fun setupMatchJoinActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
         ViewCompat.setOnApplyWindowInsetsListener(binding.menu) { v, insets ->
@@ -64,6 +64,10 @@ class MatchJoinActivity: AppCompatActivity() {
             var matchId = binding.matchIdEditText.text.toString()
             joinMatch(matchId)
         }
+
+        binding.backButton.setOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
     }
 
     private fun joinMatch(matchId: String) {
@@ -74,9 +78,9 @@ class MatchJoinActivity: AppCompatActivity() {
             try {
                 val matchExists = viewModel.joinMatch(matchId)
                 if (matchExists) NavigationUtils.navigateToMatchWaiting(activityContext, matchId, false)
-                else showLoadingOverlays(false, true)
+                else showLoadingOverlays(false, true, false)
             }
-            catch (_: Exception) { showLoadingOverlays(false, true) }
+            catch (_: Exception) { showLoadingOverlays(false, false, true) }
         }
     }
 
@@ -91,6 +95,7 @@ class MatchJoinActivity: AppCompatActivity() {
             binding.loadingHint.visibility = VISIBLE
             binding.loadingHint.text = resources.getString(R.string.loading_hint_simpler)
         } else {
+            binding.loadingHint.visibility = INVISIBLE
             binding.mainContent.visibility = VISIBLE
 
             binding.gclef.visibility = INVISIBLE

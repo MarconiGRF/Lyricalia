@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import br.dev.marconi.lyricalia.repositories.match.CreateMatchRequest
 import br.dev.marconi.lyricalia.repositories.match.MatchService
 import br.dev.marconi.lyricalia.utils.StorageUtils
+import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
@@ -21,20 +23,26 @@ class MatchJoinViewModel(
     }
 
     suspend fun joinMatch(matchId: String): Boolean {
-        val retrofit = Retrofit.Builder()
-            .baseUrl(baseUrl)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        try {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(baseUrl)
+                .addConverterFactory(GsonConverterFactory.create(
+                    GsonBuilder().setStrictness(Strictness.LENIENT).create()
+                ))
+                .build()
 
-        val service = retrofit.create<MatchService>(MatchService::class.java)
+            val service = retrofit.create<MatchService>(MatchService::class.java)
 
-        val response = service.joinMatch(matchId)
-        if (!response.isSuccessful) {
-            Log.e("IF1001_P3_LYRICALIA", "Could not join match due to -> ${response.errorBody()}")
-            throw Error("Status ${response.code()}")
+            val response = service.joinMatch(matchId)
+            if (!response.isSuccessful) {
+                Log.e("IF1001_P3_LYRICALIA", "Could not join match due to -> ${response.errorBody()}")
+                return false
+            }
+
+            return true
+        } catch (ex: Exception) {
+            throw Exception("Could not join match due to ${ex.message}")
         }
-
-        return true
     }
 }
 

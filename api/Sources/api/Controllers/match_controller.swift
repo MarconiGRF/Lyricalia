@@ -3,11 +3,13 @@ import Vapor
 struct MatchController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let matchRoutes = routes.grouped("match")
-
         matchRoutes.post(use: create)
 
-        matchRoutes.group(":match-id") { matchRoutes in
+        matchRoutes.group("exists", ":match-id") { matchRoutes in
             matchRoutes.get(use: exists)
+        }
+
+        matchRoutes.group(":match-id") { matchRoutes in
             matchRoutes.webSocket{ req, ws in
                 join(req, ws)
             }

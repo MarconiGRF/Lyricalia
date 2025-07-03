@@ -28,7 +28,7 @@ class MatchStateManager: @unchecked Sendable {
         "NotForMe",
         "Monarchy",
         "Dinasty",
-        "Repubic",
+        "Replubic",
     ]
 
     func create(songLimit: Int) -> String {

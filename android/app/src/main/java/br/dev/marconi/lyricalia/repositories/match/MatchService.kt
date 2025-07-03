@@ -10,6 +10,6 @@ interface MatchService {
     @POST("match")
     suspend fun createMatch(@Body request: CreateMatchRequest): Response<String>
 
-    @GET("match/{matchId}")
-    suspend fun joinMatch(@Path("matchId") matchId: String) : Response<String>
+    @GET("match/exists/{matchId}")
+    suspend fun joinMatch(@Path("matchId") matchId: String) : Response<Unit>
 }

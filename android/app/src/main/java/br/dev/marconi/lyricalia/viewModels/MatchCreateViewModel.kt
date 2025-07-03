@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import br.dev.marconi.lyricalia.repositories.match.CreateMatchRequest
 import br.dev.marconi.lyricalia.repositories.match.MatchService
 import br.dev.marconi.lyricalia.utils.StorageUtils
+import com.google.gson.GsonBuilder
+import com.google.gson.Strictness
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
@@ -23,17 +25,23 @@ class MatchCreateViewModel(
     suspend fun createMatch(songLimit: Int): String {
         val retrofit = Retrofit.Builder()
             .baseUrl(baseUrl)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(
+                GsonBuilder().setStrictness(Strictness.LENIENT).create()
+            ))
             .build()
 
         val service = retrofit.create<MatchService>(MatchService::class.java)
 
-        val response = service.createMatch(CreateMatchRequest(songLimit))
-        if (response.isSuccessful) {
-            return response.body()!!
-        } else {
-            Log.e("IF1001_P3_LYRICALIA", "Could not create match due to -> ${response.errorBody()}")
-            throw Error("Status ${response.code()}")
+        try {
+            val response = service.createMatch(CreateMatchRequest(songLimit))
+            if (response.isSuccessful) {
+                return response.body()!!
+            } else {
+                Log.e("IF1001_P3_LYRICALIA", "Could not create match due to -> ${response.errorBody()}")
+                throw Exception("Status ${response.code()}")
+            }
+        } catch (ex: Exception) {
+            throw Exception("Could not create match due to ${ex.message}")
         }
     }
 }

@@ -1,6 +1,7 @@
 package br.dev.marconi.lyricalia.activities.match
 
 import android.animation.LayoutTransition
+import android.app.AlertDialog
 import android.content.res.Resources
 import android.graphics.Color
 import android.os.Bundle
@@ -9,14 +10,18 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchWaitingBinding
+import br.dev.marconi.lyricalia.repositories.match.MatchWebSocket
 import br.dev.marconi.lyricalia.utils.NavigationUtils
+import br.dev.marconi.lyricalia.utils.StorageUtils
 
 class MatchWaitingActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchWaitingBinding
@@ -44,7 +49,6 @@ class MatchWaitingActivity: AppCompatActivity() {
         )
 
         otherPlayersLayout = binding.otherPlayers
-        binding.createMatchButton.setOnClickListener { addPlayerOnView() }
 
         val layoutTransition = LayoutTransition()
         layoutTransition.enableTransitionType(LayoutTransition.APPEARING)
@@ -59,6 +63,78 @@ class MatchWaitingActivity: AppCompatActivity() {
         binding.matchId.text = matchId
 
         val isHost = intent.extras!!.getBoolean(NavigationUtils.IS_HOST_PARAMETER_ID)
+        if (isHost) {
+            connectAsHost(matchId)
+
+            binding.closeButton.setOnClickListener {
+                AlertDialog.Builder(this)
+                    .setTitle("Sair?")
+                    .setMessage("Isso desconectará os outros jogadores")
+                    .create().show()
+
+//                NavigationUtils.navigateToMenu(this)
+            }
+
+            binding.createMatchButton.setOnClickListener { addPlayerOnView() }
+        } else {
+            connectAsPlayer(matchId)
+
+            binding.closeButton.setOnClickListener {
+                AlertDialog.Builder(this)
+                    .setTitle("Sair?")
+                    .setMessage("Você será desconectado da partida")
+                    .setNeutralButton("VOLTAR") { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("SAIR") { dialog, _ ->
+                        dialog.dismiss()
+                        NavigationUtils.navigateToMenu(this)
+                    }
+                    .create().show()
+
+            }
+
+            binding.createMatchButton.isClickable = false
+            binding.createMatchButton.text = "Aguardando host..."
+            binding.createMatchButton.setTextColor(
+                resources.getColor(R.color.lyWhite, theme)
+            )
+            binding.createMatchButton.setBackgroundColor(resources.getColor(R.color.lyDarkerGray, theme))
+        }
+    }
+
+    private fun connectAsHost(matchId: String) {
+        try {
+            val ws = MatchWebSocket()
+            ws.connect(
+                StorageUtils(applicationContext.filesDir).retrieveServerIp(),
+                matchId,
+                lifecycleScope,
+                { },
+                { }
+            )
+
+            ws.send("host")
+        } catch (ex: Exception) {
+            Toast.makeText(this, "Failed to join match as host: ${ex.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun connectAsPlayer(matchId: String) {
+        try {
+            val ws = MatchWebSocket()
+            ws.connect(
+                StorageUtils(applicationContext.filesDir).retrieveServerIp(),
+                matchId,
+                lifecycleScope,
+                { },
+                { }
+            )
+
+            ws.send("player")
+        } catch (ex: Exception) {
+            Toast.makeText(this, "Failed to join match as player: ${ex.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun addPlayerOnView() {
