@@ -19,7 +19,7 @@ class MatchWebSocket {
         matchId: String,
         lifecycleScope: LifecycleCoroutineScope,
         onText: (text: String) -> Unit,
-        onFinished: (code: Int) -> Unit
+        onFinished: (hostOnline: Boolean) -> Unit
     ) {
         val request = Request.Builder()
             .url("$baseUrl/match/$matchId")
@@ -40,7 +40,7 @@ class MatchWebSocket {
                     Log.d("IF1001_P3_LYRICALIA", "FAILED Websocket to Match -> ${t.message}")
                     println("Error: ${t.message}")
 
-                    lifecycleScope.launch { onFinished(-1) }
+                    lifecycleScope.launch { onFinished(false) }
                     super.onFailure(webSocket, t, response)
                 }
 
@@ -50,7 +50,7 @@ class MatchWebSocket {
 
                 override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                     Log.d("IF1001_P3_LYRICALIA", "CLOSING Websocket to Match -> $code - $reason")
-                    lifecycleScope.launch { onFinished(code) }
+                    lifecycleScope.launch { onFinished(false) }
                     super.onClosing(webSocket, code, reason)
                 }
             })

@@ -136,7 +136,7 @@ class MenuActivity : AppCompatActivity() {
         if (closingCode != normalClosure) {
             binding.mainContent.visibility = INVISIBLE
             binding.loadingHint.visibility = VISIBLE
-            binding.loadingHint.text = "Não foi possível falar com o backend, reabra o app :("
+            binding.loadingHint.text = "Não foi possível falar com o servidor, reabra o app :("
         }
     }
 

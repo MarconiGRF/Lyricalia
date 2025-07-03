@@ -1,4 +1,5 @@
 import Vapor
+import Fluent
 
 struct MatchController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
@@ -35,18 +36,77 @@ struct MatchController: RouteCollection {
     }
 
     func join(_ req: Request, _ ws: WebSocket) {
+        let matchId = req.parameters.get("match-id")!
+
         ws.onText { ws, text in
-            switch text {
+            print("Processing '\(text)'")
+            let command = text.components(separatedBy: "$")
+
+            switch command[0] {
             case "host":
-                print("host joined")
+                handleHostCommand(command[1..<command.count], matchId, ws, req.db)
 
             case "player":
-                print("player joined")
+                handlePlayerMessage(command[1..<command.count], matchId, ws, req.db)
 
             default:
                 print("???")
-
             }
+        }
+    }
+
+    func handlePlayerMessage(
+        _ message: ArraySlice<String>,
+        _ matchId: String,
+        _ ws: WebSocket,
+        _ db: any Database
+    ) {
+        do {
+            let match = try MatchStateManager.instance.get(matchId)
+
+            switch message[1] {
+                case PlayerMessages.JOIN.rawValue:
+                    print("    -> Player joining")
+                    Task { try await match.addPlayer(playerId: message[2], ws: ws, db: db) }
+
+                default:
+                    throw LyricaliaAPIError.invalidCommand
+            }
+        } catch {
+            print("Error processing PLAYER command \(message.joined(by: "$"))")
+            print("    ---> \(error)")
+        }
+    }
+
+    func handleHostCommand(
+        _ command: ArraySlice<String>,
+        _ matchId: String,
+        _ ws: WebSocket,
+        _ db: any Database
+    ) {
+        do {
+            let match = try MatchStateManager.instance.get(matchId)
+
+            switch command[1] {
+                case HostCommands.RECEIVABLE_SET.rawValue:
+                    print("    -> Setting host")
+                    try match.setHost(hostId: command[2])
+                    Task { try await match.addPlayer(playerId: command[2], ws: ws, db: db) }
+
+                case HostCommands.RECEIVABLE_START.rawValue:
+                    print("    -> Starting match")
+                    match.start()
+
+                case HostCommands.RECEIVABLE_END.rawValue:
+                    print("    -> Ending match")
+                    match.end()
+
+                default:
+                    throw LyricaliaAPIError.invalidCommand
+            }
+        } catch {
+            print("Error processing HOST command \(command.joined(by: "$"))")
+            print("    ---> \(error)")
         }
     }
 }

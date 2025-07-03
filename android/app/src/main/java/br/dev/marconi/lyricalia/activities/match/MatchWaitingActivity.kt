@@ -2,8 +2,6 @@ package br.dev.marconi.lyricalia.activities.match
 
 import android.animation.LayoutTransition
 import android.app.AlertDialog
-import android.content.res.Resources
-import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,19 +14,21 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchWaitingBinding
-import br.dev.marconi.lyricalia.repositories.match.MatchWebSocket
 import br.dev.marconi.lyricalia.utils.NavigationUtils
-import br.dev.marconi.lyricalia.utils.StorageUtils
+import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModel
+import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModelFactory
 
 class MatchWaitingActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchWaitingBinding
+    private lateinit var viewModel: MatchWaitingViewModel
+
+    private var players = mutableMapOf<String, Int>()
     private lateinit var otherPlayersLayout: LinearLayout
     private lateinit var playerColors: Array<Pair<Int, Int>>
-    private var currentColor = 0
-    private var players = mutableMapOf<String, Int>()
 
     override fun onStart() {
         super.onStart()
@@ -37,8 +37,31 @@ class MatchWaitingActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val vmFactory = MatchWaitingViewModelFactory(applicationContext.filesDir, lifecycleScope)
+        viewModel = ViewModelProvider(this, vmFactory)[MatchWaitingViewModel::class.java]
+
+        setupCommonUI()
+
+        val matchId = intent.extras!!.getString(NavigationUtils.MATCH_ID_PARAMETER_ID)!!
+        binding.matchId.text = matchId
+
+        val isHost = intent.extras!!.getBoolean(NavigationUtils.IS_HOST_PARAMETER_ID)
+        if (isHost) setupAsHost(matchId) else setupAsPlayer(matchId)
+    }
+
+    private fun setupCommonUI() {
         binding = ActivityMatchWaitingBinding.inflate(layoutInflater)
-        setupMatchWaitingActivity()
+
+        enableEdgeToEdge()
+        setContentView(binding.root)
+
+        // TODO: Fix white icons on dark mode UI with absolutely zero contrast
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.menu) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
 
         playerColors = arrayOf(
             Pair(resources.getColor(R.color.lyWhite, theme), resources.getColor(R.color.lyIndigo, theme)),
@@ -59,82 +82,63 @@ class MatchWaitingActivity: AppCompatActivity() {
         layoutTransition.setDuration(LayoutTransition.CHANGE_APPEARING, 350)
         otherPlayersLayout.layoutTransition = layoutTransition
 
-        val matchId = intent.extras!!.getString(NavigationUtils.MATCH_ID_PARAMETER_ID)!!
-        binding.matchId.text = matchId
-
-        val isHost = intent.extras!!.getBoolean(NavigationUtils.IS_HOST_PARAMETER_ID)
-        if (isHost) {
-            connectAsHost(matchId)
-
-            binding.closeButton.setOnClickListener {
+        viewModel.hostOnline.observe(this) {
+            if (it == false) {
                 AlertDialog.Builder(this)
-                    .setTitle("Sair?")
-                    .setMessage("Isso desconectará os outros jogadores")
-                    .create().show()
-
-//                NavigationUtils.navigateToMenu(this)
-            }
-
-            binding.createMatchButton.setOnClickListener { addPlayerOnView() }
-        } else {
-            connectAsPlayer(matchId)
-
-            binding.closeButton.setOnClickListener {
-                AlertDialog.Builder(this)
-                    .setTitle("Sair?")
-                    .setMessage("Você será desconectado da partida")
-                    .setNeutralButton("VOLTAR") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .setNegativeButton("SAIR") { dialog, _ ->
+                    .setTitle("Partida encerrada pelo servidor")
+                    .setCancelable(false)
+                    .setNegativeButton("OK") { dialog, _ ->
                         dialog.dismiss()
                         NavigationUtils.navigateToMenu(this)
                     }
                     .create().show()
-
             }
-
-            binding.createMatchButton.isClickable = false
-            binding.createMatchButton.text = "Aguardando host..."
-            binding.createMatchButton.setTextColor(
-                resources.getColor(R.color.lyWhite, theme)
-            )
-            binding.createMatchButton.setBackgroundColor(resources.getColor(R.color.lyDarkerGray, theme))
         }
     }
 
-    private fun connectAsHost(matchId: String) {
-        try {
-            val ws = MatchWebSocket()
-            ws.connect(
-                StorageUtils(applicationContext.filesDir).retrieveServerIp(),
-                matchId,
-                lifecycleScope,
-                { },
-                { }
-            )
+    private fun setupAsHost(matchId: String) {
+        viewModel.connectAsHost(matchId)
 
-            ws.send("host")
-        } catch (ex: Exception) {
-            Toast.makeText(this, "Failed to join match as host: ${ex.message}", Toast.LENGTH_LONG).show()
+        binding.closeButton.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Sair?")
+                .setMessage("Isso desconectará os outros jogadores")
+                .setNegativeButton("SAIR") { dialog, _ ->
+                    dialog.dismiss()
+                    viewModel.endMatch()
+                    NavigationUtils.navigateToMenu(this)
+                }
+                .create().show()
+        }
+
+        binding.actionMatchButton.setOnClickListener {
+            viewModel.startMatch()
         }
     }
 
-    private fun connectAsPlayer(matchId: String) {
-        try {
-            val ws = MatchWebSocket()
-            ws.connect(
-                StorageUtils(applicationContext.filesDir).retrieveServerIp(),
-                matchId,
-                lifecycleScope,
-                { },
-                { }
-            )
+    private fun setupAsPlayer(matchId: String) {
+        viewModel.connectAsPlayer(matchId)
 
-            ws.send("player")
-        } catch (ex: Exception) {
-            Toast.makeText(this, "Failed to join match as player: ${ex.message}", Toast.LENGTH_LONG).show()
+        binding.closeButton.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Sair?")
+                .setMessage("Você será desconectado da partida")
+                .setNeutralButton("CANCELAR") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .setNegativeButton("SAIR") { dialog, _ ->
+                    dialog.dismiss()
+                    NavigationUtils.navigateToMenu(this)
+                }
+                .create().show()
         }
+
+        binding.actionMatchButton.isClickable = false
+        binding.actionMatchButton.text = "Aguardando host..."
+        binding.actionMatchButton.setTextColor(
+            resources.getColor(R.color.lyWhite, theme)
+        )
+        binding.actionMatchButton.setBackgroundColor(resources.getColor(R.color.lyDarkerGray, theme))
     }
 
     private fun addPlayerOnView() {
@@ -146,12 +150,12 @@ class MatchWaitingActivity: AppCompatActivity() {
         players.put(playerName, playerIndicatorInstance.id)
 
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
-            .setColorFilter(playerColors[currentColor].second)
+            .setColorFilter(playerColors[viewModel.getCurrentColor()].second)
         playerIndicatorInstance.findViewById<TextView>(R.id.playerGlyph).also {
-            it.setTextColor(playerColors[currentColor].first)
+            it.setTextColor(playerColors[viewModel.getCurrentColor()].first)
             it.text = playerName
         }
-        currentColor = (currentColor + 1) % playerColors.size
+        viewModel.incrementCurrentColor(playerColors.size)
 
         playerIndicatorInstance.translationY = 2000f
         otherPlayersLayout.addView(playerIndicatorInstance)
@@ -175,18 +179,5 @@ class MatchWaitingActivity: AppCompatActivity() {
 
         val playerIndicatorInstance = playersContainer.findViewById<ConstraintLayout>(playerIndicatorId)
         playersContainer.removeView(playerIndicatorInstance)
-    }
-
-    private fun setupMatchWaitingActivity() {
-        enableEdgeToEdge()
-        setContentView(binding.root)
-
-        // TODO: Fix white icons on dark mode UI with absolutely zero contrast
-
-        ViewCompat.setOnApplyWindowInsetsListener(binding.menu) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
     }
 }

@@ -28,7 +28,7 @@ class MatchStateManager: @unchecked Sendable {
         "NotForMe",
         "Monarchy",
         "Dinasty",
-        "Replubic",
+        "Republic",
     ]
 
     func create(songLimit: Int) -> String {
@@ -37,6 +37,14 @@ class MatchStateManager: @unchecked Sendable {
 
         matches[id] = match
         return id
+    }
+
+    func get(_ matchId: String) throws -> Match {
+        guard let match = matches[matchId] else {
+            throw LyricaliaAPIError.inconsistency("Match not Found")
+        }
+
+        return match
     }
 
     func exists(_ matchId: String) -> Bool { matches[matchId] != nil }

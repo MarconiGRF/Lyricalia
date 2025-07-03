@@ -68,6 +68,8 @@ class MatchJoinActivity: AppCompatActivity() {
         binding.backButton.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+
+        binding.matchIdEditText.requestFocus()
     }
 
     private fun joinMatch(matchId: String) {
