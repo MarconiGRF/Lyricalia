@@ -82,7 +82,6 @@ class Match: @unchecked Sendable {
         }
 
         let playingUser = PlayingUser(user, ws)
-        players.append(playingUser)
 
         for player in players {
             let jsonifiedPlayer = try JSONEncoder().encode(
@@ -92,6 +91,15 @@ class Match: @unchecked Sendable {
                 try await player.ws.send(
                     PlayerMessages.JOINED.rawValue + String(data: jsonifiedPlayer, encoding: .utf8)!
                 )
+            }
+        }
+
+        players.append(playingUser)
+        for player in players {
+            let jsonifiedPlayer = try JSONEncoder().encode(
+                JoinedPlayer(id: player.user.id!, name: player.user.name, username: player.user.username)
+            )
+            do {
                 try await ws.send(
                     PlayerMessages.JOINED.rawValue + String(data: jsonifiedPlayer, encoding: .utf8)!
                 )

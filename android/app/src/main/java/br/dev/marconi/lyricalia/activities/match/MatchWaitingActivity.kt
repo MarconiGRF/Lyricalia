@@ -2,7 +2,13 @@ package br.dev.marconi.lyricalia.activities.match
 
 import android.animation.LayoutTransition
 import android.app.AlertDialog
+import android.content.Context
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.VibrationEffect.EFFECT_CLICK
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
@@ -189,6 +195,12 @@ class MatchWaitingActivity: AppCompatActivity() {
 
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
             .setColorFilter(playerColors[viewModel.getCurrentColor()].second)
+        playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
+            .setOnClickListener {
+                Toast.makeText(this, playerInfo.name, Toast.LENGTH_SHORT).show()
+            }
+        playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
+            .performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         playerIndicatorInstance.findViewById<TextView>(R.id.playerGlyph).also {
             it.setTextColor(playerColors[viewModel.getCurrentColor()].first)
             it.text = playerInfo.name[0].toString()

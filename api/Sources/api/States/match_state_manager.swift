@@ -21,7 +21,7 @@ class MatchStateManager: @unchecked Sendable {
     private var adjectives = [
         "IsAwesome",
         "IsCrazy",
-        "Legendary",
+        "Legend",
         "Flop",
         "Sad",
         "GlobalHit",
