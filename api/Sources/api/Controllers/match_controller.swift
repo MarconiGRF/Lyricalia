@@ -68,6 +68,9 @@ struct MatchController: RouteCollection {
                 case PlayerMessages.JOIN.rawValue:
                     print("    -> Player joining")
                     Task { try await match.addPlayer(playerId: message[2], ws: ws, db: db) }
+                case PlayerMessages.LEAVE.rawValue:
+                    print("    -> Player leaving")
+                    Task { try await match.removePlayer(playerId: message[2]) }
 
                 default:
                     throw LyricaliaAPIError.invalidCommand
@@ -100,6 +103,7 @@ struct MatchController: RouteCollection {
                 case HostCommands.RECEIVABLE_END.rawValue:
                     print("    -> Ending match")
                     match.end()
+                    MatchStateManager.instance.cease(matchId: matchId)
 
                 default:
                     throw LyricaliaAPIError.invalidCommand

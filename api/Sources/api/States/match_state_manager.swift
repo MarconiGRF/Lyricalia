@@ -39,6 +39,10 @@ class MatchStateManager: @unchecked Sendable {
         return id
     }
 
+    func cease(matchId: String) {
+        matches.removeValue(forKey: matchId)
+    }
+
     func get(_ matchId: String) throws -> Match {
         guard let match = matches[matchId] else {
             throw LyricaliaAPIError.inconsistency("Match not Found")

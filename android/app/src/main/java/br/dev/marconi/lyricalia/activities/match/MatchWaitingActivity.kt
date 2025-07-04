@@ -18,9 +18,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchWaitingBinding
+import br.dev.marconi.lyricalia.enums.HostCommands
+import br.dev.marconi.lyricalia.enums.PlayerMessages
+import br.dev.marconi.lyricalia.repositories.match.PlayerInfo
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModel
 import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModelFactory
+import com.google.gson.Gson
 
 class MatchWaitingActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchWaitingBinding
@@ -83,16 +87,39 @@ class MatchWaitingActivity: AppCompatActivity() {
         otherPlayersLayout.layoutTransition = layoutTransition
 
         viewModel.hostOnline.observe(this) {
-            if (it == false) {
-                AlertDialog.Builder(this)
-                    .setTitle("Partida encerrada pelo servidor")
-                    .setCancelable(false)
-                    .setNegativeButton("OK") { dialog, _ ->
-                        dialog.dismiss()
-                        NavigationUtils.navigateToMenu(this)
-                    }
-                    .create().show()
+            if (it == false) { ceaseMatch() }
+        }
+
+        viewModel.actionable.observe(this) {
+            if (it !== null) { processActionable(it) }
+        }
+    }
+
+    private fun processActionable(messageParts: List<String>) {
+        when (messageParts[0]) {
+            PlayerMessages.ENTITY -> processPlayerActionable(messageParts)
+            HostCommands.ENTITY -> processHostActionable(messageParts)
+            else -> { toastUnknownMessage(messageParts.joinToString("$")) }
+        }
+    }
+
+    private fun processPlayerActionable(messageParts: List<String>) {
+        when(messageParts[1]) {
+            PlayerMessages.RECEIVABLE_JOINED -> {
+                val playerInfo = Gson().fromJson(messageParts[2], PlayerInfo::class.java)
+                addPlayerOnView(playerInfo)
             }
+            PlayerMessages.RECEIVABLE_LEFT -> {
+                removePlayer(messageParts[2])
+            }
+            else -> { toastUnknownMessage(messageParts.joinToString("$")) }
+        }
+    }
+
+    private fun processHostActionable(messageParts: List<String>) {
+        when(messageParts[1]) {
+            HostCommands.RECEIVABLE_END -> { ceaseMatch() }
+            else -> { toastUnknownMessage(messageParts.joinToString("$")) }
         }
     }
 
@@ -128,6 +155,7 @@ class MatchWaitingActivity: AppCompatActivity() {
                 }
                 .setNegativeButton("SAIR") { dialog, _ ->
                     dialog.dismiss()
+                    viewModel.leaveMatch()
                     NavigationUtils.navigateToMenu(this)
                 }
                 .create().show()
@@ -141,19 +169,29 @@ class MatchWaitingActivity: AppCompatActivity() {
         binding.actionMatchButton.setBackgroundColor(resources.getColor(R.color.lyDarkerGray, theme))
     }
 
-    private fun addPlayerOnView() {
+    private fun ceaseMatch() {
+        AlertDialog.Builder(this)
+            .setTitle("Partida encerrada pelo servidor")
+            .setCancelable(false)
+            .setNegativeButton("OK") { dialog, _ ->
+                dialog.dismiss()
+                NavigationUtils.navigateToMenu(this)
+            }
+            .create().show()
+    }
+
+    private fun addPlayerOnView(playerInfo: PlayerInfo) {
         val playerIndicatorInstance = LayoutInflater.from(this)
             .inflate(R.layout.player_indicator, otherPlayersLayout, false)
 
-        val playerName = ('A'..'Z').random().toString()
         playerIndicatorInstance.id = View.generateViewId()
-        players.put(playerName, playerIndicatorInstance.id)
+        players.put(playerInfo.id, playerIndicatorInstance.id)
 
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
             .setColorFilter(playerColors[viewModel.getCurrentColor()].second)
         playerIndicatorInstance.findViewById<TextView>(R.id.playerGlyph).also {
             it.setTextColor(playerColors[viewModel.getCurrentColor()].first)
-            it.text = playerName
+            it.text = playerInfo.name[0].toString()
         }
         viewModel.incrementCurrentColor(playerColors.size)
 
@@ -174,10 +212,22 @@ class MatchWaitingActivity: AppCompatActivity() {
                 .start()
         }
     }
-    private fun removePlayer(playerIndicatorId: Int) {
-        val playersContainer = binding.otherPlayers
 
-        val playerIndicatorInstance = playersContainer.findViewById<ConstraintLayout>(playerIndicatorId)
-        playersContainer.removeView(playerIndicatorInstance)
+    private fun removePlayer(playerId: String) {
+        val playerIndicatorId = players[playerId]
+
+        if (playerIndicatorId !== null) {
+            val playerIndicatorInstance = otherPlayersLayout
+                .findViewById<ConstraintLayout>(playerIndicatorId)
+            otherPlayersLayout.removeView(playerIndicatorInstance)
+        }
+    }
+
+    private fun toastUnknownMessage(message: String) {
+        Toast.makeText(
+            this,
+            "Mensagem desconhecida: $message",
+            Toast.LENGTH_LONG
+        ).show()
     }
 }

@@ -61,7 +61,7 @@ class Match: @unchecked Sendable {
             }
 
             for removablePlayer in removablePlayers {
-                do { try await removePlayer(playerUUID: removablePlayer) }
+                do { try await removePlayer(playerId: removablePlayer) }
             }
         }}
     }
@@ -78,7 +78,7 @@ class Match: @unchecked Sendable {
             throw LyricaliaAPIError.inconsistency("Invalid UUID to be set as host of match")
         }
         guard let user = try await User.find(uuid, on: db) else {
-            throw LyricaliaAPIError.inconsistency("Invalid UUID to be set as host of match")
+            throw LyricaliaAPIError.inconsistency("No user found for given UUID to be set as host of match")
         }
 
         let playingUser = PlayingUser(user, ws)
@@ -90,6 +90,9 @@ class Match: @unchecked Sendable {
             )
             do {
                 try await player.ws.send(
+                    PlayerMessages.JOINED.rawValue + String(data: jsonifiedPlayer, encoding: .utf8)!
+                )
+                try await ws.send(
                     PlayerMessages.JOINED.rawValue + String(data: jsonifiedPlayer, encoding: .utf8)!
                 )
             }
@@ -104,21 +107,28 @@ class Match: @unchecked Sendable {
         inProgress = false
     }
 
-    private func removePlayer(playerUUID: UUID) async throws {
+    func removePlayer(playerId: String) async throws {
+        let id = UUID(uuidString: playerId)
+        if (id != nil) {
+            try await removePlayer(playerId: id!)
+        }
+    }
+
+    func removePlayer(playerId: UUID) async throws {
         do {
-            let playerIndex = players.firstIndex(where: { $0.user.id! == playerUUID })
+            let playerIndex = players.firstIndex(where: { $0.user.id! == playerId })
             if playerIndex != nil {
                 players.remove(at: playerIndex!)
             }
 
             for player in players {
                 try await player.ws.send(
-                    PlayerMessages.LEFT.rawValue + playerUUID.uuidString
+                    PlayerMessages.LEFT.rawValue + playerId.uuidString
                 )
             }
 
         } catch {
-            print("Failed to remove player \(playerUUID.uuidString) due to \(error)")
+            print("Failed to remove player \(playerId.uuidString) due to \(error)")
         }
     }
 

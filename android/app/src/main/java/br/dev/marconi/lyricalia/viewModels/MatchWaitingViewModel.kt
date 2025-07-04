@@ -1,23 +1,15 @@
 package br.dev.marconi.lyricalia.viewModels
 
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.PlayerMessages
-import br.dev.marconi.lyricalia.repositories.match.CreateMatchRequest
-import br.dev.marconi.lyricalia.repositories.match.MatchService
 import br.dev.marconi.lyricalia.repositories.match.MatchWebSocket
 import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.StorageUtils
-import com.google.gson.GsonBuilder
-import com.google.gson.Strictness
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 
 class MatchWaitingViewModel(
@@ -31,7 +23,7 @@ class MatchWaitingViewModel(
     }
 
     val hostOnline: MutableLiveData<Boolean?> = MutableLiveData<Boolean?>(null)
-    val actionable: MutableLiveData<String?> = MutableLiveData<String?>(null)
+    val actionable: MutableLiveData<List<String>?> = MutableLiveData<List<String>?>(null)
 
     private val baseUrl: String
     private val currentUser: User
@@ -44,13 +36,28 @@ class MatchWaitingViewModel(
         currentUser = StorageUtils(filesDir).retrieveUser()!!
     }
 
+    fun startMatch() {
+        ws.send(HostCommands.START)
+    }
+
+    fun endMatch() {
+        ws.send(HostCommands.SENDABLE_END)
+    }
+
+    fun leaveMatch() {
+        ws.send(PlayerMessages.LEAVE(currentUser.id!!))
+    }
+
     fun connectAsHost(matchId: String) {
         try {
             ws.connect(
                 StorageUtils(filesDir).retrieveServerIp(),
                 matchId,
                 lifecycleScope,
-                { Log.d("IF1001_P3_LYRICALIA", "Match message received: $it") },
+                {
+                    Log.d("IF1001_P3_LYRICALIA", "Match message received: $it")
+                    actionable.value = it.split("$")
+                },
                 { hostOnline.value = it }
             )
 
@@ -62,12 +69,14 @@ class MatchWaitingViewModel(
 
     fun connectAsPlayer(matchId: String) {
         try {
-            val ws = MatchWebSocket()
             ws.connect(
                 StorageUtils(filesDir).retrieveServerIp(),
                 matchId,
                 lifecycleScope,
-                { Log.d("IF1001_P3_LYRICALIA", "Match message received: $it") },
+                {
+                    Log.d("IF1001_P3_LYRICALIA", "Match message received: $it")
+                    actionable.value = it.split("$")
+                },
                 { hostOnline.value = it }
             )
 
@@ -75,14 +84,6 @@ class MatchWaitingViewModel(
         } catch (ex: Exception) {
             throw Exception("Failed to join match as player: ${ex.message}")
         }
-    }
-
-    fun startMatch() {
-        ws.send(HostCommands.START)
-    }
-
-    fun endMatch() {
-        ws.send(HostCommands.END)
     }
 }
 
