@@ -41,6 +41,15 @@ class NavigationUtils {
                 isHost)
         }
 
+        fun navigateToMatchOngoing(packageContext: Context, matchId: String, isHost: Boolean) {
+            navigateToActivity(
+                packageContext,
+                MatchWaitingActivity::class.java,
+                canGoBack = false,
+                matchId,
+                isHost)
+        }
+
         private fun navigateToActivity(
             packageContext: Context,
             cls: Class<out Activity>,

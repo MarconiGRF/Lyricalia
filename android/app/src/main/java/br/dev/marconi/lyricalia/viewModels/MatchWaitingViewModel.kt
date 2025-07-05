@@ -16,11 +16,7 @@ class MatchWaitingViewModel(
     private val filesDir: File,
     private val lifecycleScope: LifecycleCoroutineScope
 ): ViewModel() {
-    private var currentColor = 0
-    fun getCurrentColor() = currentColor
-    fun incrementCurrentColor(availableColors: Int) = {
-        currentColor = (currentColor + 1) % availableColors
-    }
+    var currentColor = 0
 
     val hostOnline: MutableLiveData<Boolean?> = MutableLiveData<Boolean?>(null)
     val actionable: MutableLiveData<List<String>?> = MutableLiveData<List<String>?>(null)

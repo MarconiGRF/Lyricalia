@@ -3,6 +3,7 @@ package br.dev.marconi.lyricalia.activities.match
 import android.animation.LayoutTransition
 import android.app.AlertDialog
 import android.content.Context
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.VibrationEffect.EFFECT_CLICK
@@ -11,6 +12,10 @@ import android.os.VibratorManager
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -31,6 +36,8 @@ import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModel
 import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModelFactory
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MatchWaitingActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchWaitingBinding
@@ -125,6 +132,7 @@ class MatchWaitingActivity: AppCompatActivity() {
     private fun processHostActionable(messageParts: List<String>) {
         when(messageParts[1]) {
             HostCommands.RECEIVABLE_END -> { ceaseMatch() }
+            HostCommands.RECEIVABLE_START -> { prepareMatch() }
             else -> { toastUnknownMessage(messageParts.joinToString("$")) }
         }
     }
@@ -186,6 +194,48 @@ class MatchWaitingActivity: AppCompatActivity() {
             .create().show()
     }
 
+    private fun prepareMatch() {
+        binding.closeButton.visibility = INVISIBLE
+        binding.mainContent.visibility = INVISIBLE
+        lifecycleScope.launch { countdown() }
+    }
+
+    suspend fun countdown() {
+        otherPlayersLayout.animate()
+            .translationY(500f)
+            .setDuration(550)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+
+        binding.countdownOutline.alpha = 0f
+        binding.countdown.alpha = 0f
+        binding.countdownOutline.visibility = VISIBLE
+        binding.countdown.visibility = VISIBLE
+
+        binding.countdownOutline.animate()
+            .alpha(1f)
+            .setDuration(750)
+            .start()
+        binding.countdown.animate()
+            .alpha(1f)
+            .setDuration(750)
+            .start()
+
+        var countdown = 3
+        while (countdown >= 1) {
+            MediaPlayer.create(applicationContext, R.raw.tick).start()
+            binding.countdown.text = countdown.toString()
+
+            delay(1000)
+            countdown--
+        }
+
+        MediaPlayer.create(applicationContext, R.raw.chime).start()
+        binding.countdown.text = "\uD83C\uDFC1"
+
+
+    }
+
     private fun addPlayerOnView(playerInfo: PlayerInfo) {
         val playerIndicatorInstance = LayoutInflater.from(this)
             .inflate(R.layout.player_indicator, otherPlayersLayout, false)
@@ -194,7 +244,7 @@ class MatchWaitingActivity: AppCompatActivity() {
         players.put(playerInfo.id, playerIndicatorInstance.id)
 
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
-            .setColorFilter(playerColors[viewModel.getCurrentColor()].second)
+            .setColorFilter(playerColors[viewModel.currentColor].second)
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
             .setOnClickListener {
                 Toast.makeText(this, playerInfo.name, Toast.LENGTH_SHORT).show()
@@ -202,10 +252,10 @@ class MatchWaitingActivity: AppCompatActivity() {
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
             .performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         playerIndicatorInstance.findViewById<TextView>(R.id.playerGlyph).also {
-            it.setTextColor(playerColors[viewModel.getCurrentColor()].first)
+            it.setTextColor(playerColors[viewModel.currentColor].first)
             it.text = playerInfo.name[0].toString()
         }
-        viewModel.incrementCurrentColor(playerColors.size)
+        viewModel.currentColor = (viewModel.currentColor + 1) % playerColors.size
 
         playerIndicatorInstance.translationY = 2000f
         otherPlayersLayout.addView(playerIndicatorInstance)
@@ -232,6 +282,8 @@ class MatchWaitingActivity: AppCompatActivity() {
             val playerIndicatorInstance = otherPlayersLayout
                 .findViewById<ConstraintLayout>(playerIndicatorId)
             otherPlayersLayout.removeView(playerIndicatorInstance)
+
+            players.remove(playerId)
         }
     }
 

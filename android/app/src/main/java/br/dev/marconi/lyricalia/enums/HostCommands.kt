@@ -4,6 +4,7 @@ class HostCommands {
     companion object {
         const val ENTITY = "host"
         const val RECEIVABLE_END = "end"
+        const val RECEIVABLE_START = "start"
 
         // SENDABLES
         fun SET(userId: String) = "host\$set$${userId}"

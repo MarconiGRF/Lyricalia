@@ -15,8 +15,8 @@ class MatchStateManager: @unchecked Sendable {
         "Lana",
         "Lorde",
         "Muse",
-        "OliviaRodrigo",
-        "SabrinaCarpenter"
+        "OliviaR",
+        "SabrinaC"
     ]
     private var adjectives = [
         "IsAwesome",
