@@ -1,9 +1,8 @@
-package br.dev.marconi.lyricalia.viewModels
+package br.dev.marconi.lyricalia.viewModels.match
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import br.dev.marconi.lyricalia.repositories.match.CreateMatchRequest
 import br.dev.marconi.lyricalia.repositories.match.MatchService
 import br.dev.marconi.lyricalia.utils.StorageUtils
 import com.google.gson.GsonBuilder

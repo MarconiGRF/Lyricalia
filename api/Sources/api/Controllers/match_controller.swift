@@ -68,9 +68,14 @@ struct MatchController: RouteCollection {
                 case PlayerMessages.JOIN.rawValue:
                     print("    -> Player joining")
                     Task { try await match.addPlayer(playerId: message[2], ws: ws, db: db) }
+
                 case PlayerMessages.LEAVE.rawValue:
                     print("    -> Player leaving")
-                    Task { try await match.removePlayer(playerId: message[2]) }
+                    Task { await match.removePlayer(playerId: message[2]) }
+
+                case PlayerMessages.READY.rawValue:
+                    print("    -> Player ready")
+                    Task { await match.ackReadiness(playerId: message[2], ws: ws) }
 
                 default:
                     throw LyricaliaAPIError.invalidCommand

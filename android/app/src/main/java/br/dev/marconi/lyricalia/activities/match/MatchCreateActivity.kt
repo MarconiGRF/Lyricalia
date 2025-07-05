@@ -1,8 +1,6 @@
 package br.dev.marconi.lyricalia.activities.match
 
-import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import androidx.activity.enableEdgeToEdge
@@ -14,8 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchCreateBinding
 import br.dev.marconi.lyricalia.utils.NavigationUtils
-import br.dev.marconi.lyricalia.viewModels.MatchCreateViewModel
-import br.dev.marconi.lyricalia.viewModels.MatchCreateViewModelFactory
+import br.dev.marconi.lyricalia.viewModels.match.MatchCreateViewModel
+import br.dev.marconi.lyricalia.viewModels.match.MatchCreateViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

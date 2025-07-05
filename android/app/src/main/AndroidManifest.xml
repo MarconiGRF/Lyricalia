@@ -52,6 +52,10 @@
             android:name=".activities.match.MatchJoinActivity"
             android:windowSoftInputMode="stateVisible"
             android:exported="true"/>
+        <activity
+            android:name=".activities.match.MatchOngoingActivity"
+            android:windowSoftInputMode="stateVisible"
+            android:exported="true"/>
     </application>
 
 </manifest>

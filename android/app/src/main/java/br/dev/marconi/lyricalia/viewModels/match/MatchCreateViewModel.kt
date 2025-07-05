@@ -1,4 +1,4 @@
-package br.dev.marconi.lyricalia.viewModels
+package br.dev.marconi.lyricalia.viewModels.match
 
 import android.util.Log
 import androidx.lifecycle.ViewModel

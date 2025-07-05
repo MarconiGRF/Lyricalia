@@ -1,4 +1,4 @@
-package br.dev.marconi.lyricalia.viewModels
+package br.dev.marconi.lyricalia.viewModels.match
 
 import android.util.Log
 import androidx.lifecycle.LifecycleCoroutineScope
@@ -20,6 +20,9 @@ class MatchWaitingViewModel(
 
     val hostOnline: MutableLiveData<Boolean?> = MutableLiveData<Boolean?>(null)
     val actionable: MutableLiveData<List<String>?> = MutableLiveData<List<String>?>(null)
+
+    var matchId: String = ""
+    var isHost: Boolean = false
 
     private val baseUrl: String
     private val currentUser: User
@@ -44,7 +47,7 @@ class MatchWaitingViewModel(
         ws.send(PlayerMessages.LEAVE(currentUser.id!!))
     }
 
-    fun connectAsHost(matchId: String) {
+    fun connectAsHost() {
         try {
             ws.connect(
                 StorageUtils(filesDir).retrieveServerIp(),
@@ -63,7 +66,7 @@ class MatchWaitingViewModel(
         }
     }
 
-    fun connectAsPlayer(matchId: String) {
+    fun connectAsPlayer() {
         try {
             ws.connect(
                 StorageUtils(filesDir).retrieveServerIp(),

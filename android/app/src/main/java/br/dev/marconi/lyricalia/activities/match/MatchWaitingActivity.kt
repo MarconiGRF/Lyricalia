@@ -2,19 +2,13 @@ package br.dev.marconi.lyricalia.activities.match
 
 import android.animation.LayoutTransition
 import android.app.AlertDialog
-import android.content.Context
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.VibrationEffect.EFFECT_CLICK
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
-import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -33,8 +27,8 @@ import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.PlayerMessages
 import br.dev.marconi.lyricalia.repositories.match.PlayerInfo
 import br.dev.marconi.lyricalia.utils.NavigationUtils
-import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModel
-import br.dev.marconi.lyricalia.viewModels.MatchWaitingViewModelFactory
+import br.dev.marconi.lyricalia.viewModels.match.MatchWaitingViewModel
+import br.dev.marconi.lyricalia.viewModels.match.MatchWaitingViewModelFactory
 import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,14 +50,11 @@ class MatchWaitingActivity: AppCompatActivity() {
 
         val vmFactory = MatchWaitingViewModelFactory(applicationContext.filesDir, lifecycleScope)
         viewModel = ViewModelProvider(this, vmFactory)[MatchWaitingViewModel::class.java]
+        viewModel.matchId = intent.extras!!.getString(NavigationUtils.MATCH_ID_PARAMETER_ID)!!
+        viewModel.isHost = intent.extras!!.getBoolean(NavigationUtils.IS_HOST_PARAMETER_ID)
 
         setupCommonUI()
-
-        val matchId = intent.extras!!.getString(NavigationUtils.MATCH_ID_PARAMETER_ID)!!
-        binding.matchId.text = matchId
-
-        val isHost = intent.extras!!.getBoolean(NavigationUtils.IS_HOST_PARAMETER_ID)
-        if (isHost) setupAsHost(matchId) else setupAsPlayer(matchId)
+        if (viewModel.isHost) setupAsHost() else setupAsPlayer()
     }
 
     private fun setupCommonUI() {
@@ -106,6 +97,8 @@ class MatchWaitingActivity: AppCompatActivity() {
         viewModel.actionable.observe(this) {
             if (it !== null) { processActionable(it) }
         }
+
+        binding.matchId.text = viewModel.matchId
     }
 
     private fun processActionable(messageParts: List<String>) {
@@ -137,8 +130,8 @@ class MatchWaitingActivity: AppCompatActivity() {
         }
     }
 
-    private fun setupAsHost(matchId: String) {
-        viewModel.connectAsHost(matchId)
+    private fun setupAsHost() {
+        viewModel.connectAsHost()
 
         binding.closeButton.setOnClickListener {
             AlertDialog.Builder(this)
@@ -157,8 +150,8 @@ class MatchWaitingActivity: AppCompatActivity() {
         }
     }
 
-    private fun setupAsPlayer(matchId: String) {
-        viewModel.connectAsPlayer(matchId)
+    private fun setupAsPlayer() {
+        viewModel.connectAsPlayer()
 
         binding.closeButton.setOnClickListener {
             AlertDialog.Builder(this)
@@ -233,7 +226,10 @@ class MatchWaitingActivity: AppCompatActivity() {
         MediaPlayer.create(applicationContext, R.raw.chime).start()
         binding.countdown.text = "\uD83C\uDFC1"
 
+        delay(1000)
 
+        viewModel
+        NavigationUtils.navigateToMatchOngoing(this, viewModel.matchId, viewModel.isHost)
     }
 
     private fun addPlayerOnView(playerInfo: PlayerInfo) {

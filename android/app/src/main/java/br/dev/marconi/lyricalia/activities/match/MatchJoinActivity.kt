@@ -12,8 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchJoinBinding
 import br.dev.marconi.lyricalia.utils.NavigationUtils
-import br.dev.marconi.lyricalia.viewModels.MatchJoinViewModel
-import br.dev.marconi.lyricalia.viewModels.MatchJoinViewModelFactory
+import br.dev.marconi.lyricalia.viewModels.match.MatchJoinViewModel
+import br.dev.marconi.lyricalia.viewModels.match.MatchJoinViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

@@ -7,21 +7,27 @@ struct PlayerSubmission {
     var submission: String = ""
 }
 
-struct PlayingUser {
-    let ws: WebSocket
+class PlayingUser {
     let user: User
+
+    var isReady: Bool
+    var ws: WebSocket
     var score: Int64 = 0
     var submission: [PlayerSubmission] = []
 
     init(_ user: User, _ ws: WebSocket) {
         self.user = user
         self.ws = ws
+        self.isReady = false
     }
 }
 
 class Match: @unchecked Sendable {
     let songLimit: Int
 
+    var allReady: Bool {
+        get { players.compactMap{ $0.isReady }.reduce(true) { $0 && $1 } }
+    }
     var hostId: UUID?
     var commonSongs: [Song] = []
     var chosenSongs: [Song] = []
@@ -61,7 +67,7 @@ class Match: @unchecked Sendable {
             }
 
             for removablePlayer in removablePlayers {
-                do { try await removePlayer(playerId: removablePlayer) }
+                do { await removePlayer(playerId: removablePlayer) }
             }
         }}
     }
@@ -115,14 +121,14 @@ class Match: @unchecked Sendable {
         inProgress = false
     }
 
-    func removePlayer(playerId: String) async throws {
+    func removePlayer(playerId: String) async {
         let id = UUID(uuidString: playerId)
         if (id != nil) {
-            try await removePlayer(playerId: id!)
+            await removePlayer(playerId: id!)
         }
     }
 
-    func removePlayer(playerId: UUID) async throws {
+    func removePlayer(playerId: UUID) async {
         do {
             let playerIndex = players.firstIndex(where: { $0.user.id! == playerId })
             if playerIndex != nil {
@@ -137,6 +143,28 @@ class Match: @unchecked Sendable {
 
         } catch {
             print("Failed to remove player \(playerId.uuidString) due to \(error)")
+        }
+    }
+
+    func ackReadiness(playerId: String, ws: WebSocket) async {
+        do {
+            let player = players.first { $0.user.id!.uuidString == playerId }
+            if (player == nil) { throw LyricaliaAPIError.inconsistency("No player found to be ready with id \(playerId)") }
+            player!.isReady = true
+
+            try await player!.ws.close(code: .normalClosure)
+            player!.ws = ws
+
+            if (allReady) {
+                print("All players ready!")
+                for player in players {
+                    try await player.ws.send(MatchMessages.PROCESSING.rawValue)
+                }
+            } else {
+                try await player!.ws.send(MatchMessages.WAITING.rawValue)
+            }
+        } catch {
+            print("Failed to ack player readinesss \(error)")
         }
     }
 

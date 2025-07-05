@@ -7,8 +7,10 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import android.util.Log
+import android.view.View.GONE
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
+import android.view.animation.DecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -105,7 +107,7 @@ class MenuActivity : AppCompatActivity() {
             binding.mainContent.visibility = INVISIBLE
             lifecycleScope.launch { animateGClef() }
         } else {
-            binding.animatedProgressBar.visibility = INVISIBLE
+//            binding.animatedProgressBar.visibility = INVISIBLE
             binding.gclef.visibility = INVISIBLE
             binding.loadingHint.visibility = INVISIBLE
             binding.mainContent.visibility = VISIBLE
@@ -131,13 +133,31 @@ class MenuActivity : AppCompatActivity() {
         val normalClosure = 1000
 
         showLoadingOverlays(false)
-        binding.animatedProgressBar.visibility = INVISIBLE
+        lifecycleScope.launch { gracefullyCompleteProgressBar() }
 
         if (closingCode != normalClosure) {
             binding.mainContent.visibility = INVISIBLE
             binding.loadingHint.visibility = VISIBLE
             binding.loadingHint.text = "Não foi possível falar com o servidor, reabra o app :("
         }
+    }
+
+    private suspend fun gracefullyCompleteProgressBar() {
+        binding.animatedProgressBar.animate()
+            .scaleX(1f)
+            .setDuration(300)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+
+        delay(300)
+        binding.animatedProgressBar.animate()
+            .alpha(0f)
+            .setDuration(300)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+
+        delay(300)
+        binding.animatedProgressBar.visibility = GONE
     }
 
     private fun followLibraryProcessing() {

@@ -68,6 +68,7 @@
             android:background="@drawable/rectangle_shape"
             app:layout_constraintVertical_bias="0"
             android:elevation="4dp"
+            android:visibility="invisible"
             />
         <ImageView
             android:id="@+id/gclef"

@@ -10,6 +10,7 @@ class PlayerMessages {
         // SENDABLES
         fun JOIN(userId: String) = "player\$join$$userId"
         fun LEAVE(userId: String) = "player\$leave$$userId"
+        fun READY(userId: String) = "player\$ready$$userId"
 
         // RECEIVABLES
         fun JOINED(userId: String) = "player\$joined$$userId"

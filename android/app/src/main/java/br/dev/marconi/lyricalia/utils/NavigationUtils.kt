@@ -8,7 +8,9 @@ import br.dev.marconi.lyricalia.activities.MenuActivity
 import br.dev.marconi.lyricalia.activities.SpotifyLinkActivity
 import br.dev.marconi.lyricalia.activities.match.MatchCreateActivity
 import br.dev.marconi.lyricalia.activities.match.MatchJoinActivity
+import br.dev.marconi.lyricalia.activities.match.MatchOngoingActivity
 import br.dev.marconi.lyricalia.activities.match.MatchWaitingActivity
+import kotlin.jvm.java
 
 class NavigationUtils {
     companion object {
@@ -44,7 +46,7 @@ class NavigationUtils {
         fun navigateToMatchOngoing(packageContext: Context, matchId: String, isHost: Boolean) {
             navigateToActivity(
                 packageContext,
-                MatchWaitingActivity::class.java,
+                MatchOngoingActivity::class.java,
                 canGoBack = false,
                 matchId,
                 isHost)
