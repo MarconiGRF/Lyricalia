@@ -5,6 +5,7 @@ xcuserdata
 DerivedData/
 .DS_Store
 *.sqlite
+*.sqlite-*
 .swiftpm
 .env
 .env.*

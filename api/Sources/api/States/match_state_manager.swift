@@ -1,4 +1,5 @@
 import Vapor
+import Fluent
 
 class MatchStateManager: @unchecked Sendable {
     static let instance: MatchStateManager = { return MatchStateManager() }()
@@ -15,8 +16,9 @@ class MatchStateManager: @unchecked Sendable {
         "Lana",
         "Lorde",
         "Muse",
-        "OliviaR",
-        "SabrinaC"
+        "OliviaRod",
+        "SabrinaCarp",
+        "WolfAlice"
     ]
     private var adjectives = [
         "IsAwesome",
@@ -31,8 +33,8 @@ class MatchStateManager: @unchecked Sendable {
         "Republic",
     ]
 
-    func create(songLimit: Int) -> String {
-        let match = Match(songLimit: songLimit)
+    func create(songLimit: Int, db: any Database) -> String {
+        let match = Match(songLimit: songLimit, db: db)
         let id = "\(artists.randomElement()!)\(adjectives.randomElement()!)"
 
         matches[id] = match

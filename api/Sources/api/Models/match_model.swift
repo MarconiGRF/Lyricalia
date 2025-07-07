@@ -1,6 +1,7 @@
 import struct Foundation.UUID
 import Vapor
 import Fluent
+import SQLKit
 
 struct PlayerSubmission {
     var hasSubmitted: Bool = false
@@ -24,6 +25,7 @@ class PlayingUser {
 
 class Match: @unchecked Sendable {
     let songLimit: Int
+    let db: any Database
 
     var allReady: Bool {
         get { players.compactMap{ $0.isReady }.reduce(true) { $0 && $1 } }
@@ -157,6 +159,9 @@ class Match: @unchecked Sendable {
 
             if (allReady) {
                 print("All players ready!")
+
+                Task { try await process() }
+
                 for player in players {
                     try await player.ws.send(MatchMessages.PROCESSING.rawValue)
                 }
@@ -168,7 +173,31 @@ class Match: @unchecked Sendable {
         }
     }
 
-    init(songLimit: Int) {
+    func process() async throws {
+        print("Processing match...")
+
+        do {
+            let userIds = self.players.compactMap{ $0.user.id }
+
+            let songs = try await (self.db as! any SQLDatabase).raw("""
+                SELECT * FROM songs
+                WHERE id IN (
+                    SELECT song_id FROM 'users+songs'
+                    WHERE user_id IN (\( self.players.compactMap{ "'\($0.user.id!.uuidString)'" }.joined(separator: ",") ))
+                    GROUP BY song_id HAVING COUNT(DISTINCT user_id) = \(bind: userIds.count)
+                )
+                """)
+                .all(decodingFluent: Song.self)
+
+            
+            songs.map{ print("\($0.artist) - \($0.name)") }
+        } catch {
+            print("Error processing match's songs -> \(error)")
+        }
+    }
+
+    init(songLimit: Int, db: any Database) {
         self.songLimit = songLimit
+        self.db = db
     }
 }

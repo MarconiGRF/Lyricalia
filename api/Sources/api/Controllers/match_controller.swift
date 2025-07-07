@@ -30,7 +30,7 @@ struct MatchController: RouteCollection {
     func create(req: Request) async throws -> String {
         let matchRequest = try req.content.decode(CreateMatchRequest.self)
 
-        let matchUUID = MatchStateManager.instance.create(songLimit: matchRequest.songLimit)
+        let matchUUID = MatchStateManager.instance.create(songLimit: matchRequest.songLimit, db: req.db)
 
         return matchUUID
     }

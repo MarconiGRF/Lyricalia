@@ -8,11 +8,13 @@ public func configure(_ app: Application) async throws {
     // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
     app.databases.use(.sqlite(.file("Persistence/db.sqlite")), as: .sqlite)
+    app.databases.default(to: .sqlite)
+    app.databases.use(.sqlite(.file("Persistence/lyrics.sqlite")), as: .lyrics)
 
-    app.migrations.add(UserMigration())
-    app.migrations.add(AddProcessingStatusMigration())
-    app.migrations.add(UserSongCreationMigration())
-    app.migrations.add(SongMigration())
+    app.migrations.add(UserMigration(), to: .sqlite)
+    app.migrations.add(AddProcessingStatusMigration(), to: .sqlite)
+    app.migrations.add(UserSongCreationMigration(), to: .sqlite)
+    app.migrations.add(SongMigration(), to: .sqlite)
 
     try await app.autoMigrate()
     try routes(app)
