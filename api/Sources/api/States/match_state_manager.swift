@@ -33,8 +33,8 @@ class MatchStateManager: @unchecked Sendable {
         "Republic",
     ]
 
-    func create(songLimit: Int, db: any Database) -> String {
-        let match = Match(songLimit: songLimit, db: db)
+    func create(songLimit: Int, db: any Database, lyricsDB: any Database) -> String {
+        let match = Match(songLimit: songLimit, db: db, lyricsDB: lyricsDB)
         let id = "\(artists.randomElement()!)\(adjectives.randomElement()!)"
 
         matches[id] = match

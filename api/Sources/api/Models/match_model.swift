@@ -26,6 +26,7 @@ class PlayingUser {
 class Match: @unchecked Sendable {
     let songLimit: Int
     let db: any Database
+    let lyricsDB: any Database
 
     var allReady: Bool {
         get { players.compactMap{ $0.isReady }.reduce(true) { $0 && $1 } }
@@ -72,6 +73,12 @@ class Match: @unchecked Sendable {
                 do { await removePlayer(playerId: removablePlayer) }
             }
         }}
+    }
+
+    init(songLimit: Int, db: any Database, lyricsDB: any Database) {
+        self.songLimit = songLimit
+        self.db = db
+        self.lyricsDB = lyricsDB
     }
 
     func setHost(hostId: String) throws {
@@ -179,7 +186,7 @@ class Match: @unchecked Sendable {
         do {
             let userIds = self.players.compactMap{ $0.user.id }
 
-            let songs = try await (self.db as! any SQLDatabase).raw("""
+            var commonSongs = try await (self.db as! any SQLDatabase).raw("""
                 SELECT * FROM songs
                 WHERE id IN (
                     SELECT song_id FROM 'users+songs'
@@ -189,15 +196,75 @@ class Match: @unchecked Sendable {
                 """)
                 .all(decodingFluent: Song.self)
 
-            
-            songs.map{ print("\($0.artist) - \($0.name)") }
+            if (commonSongs.count == 0) {
+                for player in players {
+                    try await player.ws.send(MatchMessages.NO_SONGS.rawValue)
+                }
+                return
+            }
+
+            let chosenSongs = getRandomSongs(&commonSongs)
+            let lyrics = await fetchLyrics(chosenSongs)
         } catch {
             print("Error processing match's songs -> \(error)")
         }
     }
 
-    init(songLimit: Int, db: any Database) {
-        self.songLimit = songLimit
-        self.db = db
+    private func fetchLyrics(_ songs: [Song]) async  -> [String : Lyric] {
+        var lyrics: [String : Lyric] = [:]
+
+        do {
+            for song in songs {
+                let normalizedSongName = normalizeSongInfo(songInfo: song.name)
+                let normalizedArtistName = normalizeSongInfo(songInfo: song.artist)
+
+                let lyric = try await (self.lyricsDB as! any SQLDatabase).raw("""
+                SELECT plain_lyrics, synced_lyrics, track_id FROM lyrics
+                WHERE id IN (
+                    SELECT last_lyrics_id FROM tracks
+                    WHERE
+                        artist_name_lower = '\(normalizedArtistName)' AND name_lower = '\(normalizedSongName)'
+                    LIMIT 1
+                )
+                LIMIT 1
+                """)
+                .all(decodingFluent: Lyric.self)
+
+                if lyric.count > 0 { lyrics[song.spotifyId] = lyric[0] }
+                else {
+                    print("Lyric not found for song '\(normalizedArtistName)' - '\(normalizedSongName)'")
+                }
+            }
+        } catch {
+            print("Failed to fetch lyrics -> \(error)")
+        }
+
+        return lyrics
+    }
+
+    private func normalizeSongInfo(songInfo: String) -> String {
+        let diacriticInsensitiveLowercaseInfo = songInfo.folding(options: .diacriticInsensitive, locale: .current).lowercased()
+
+        let specialCharactersRegex = #/[`~!@#$%^&*()_|+\-=?;:",.<>\{\}\[\]\\\/]/#
+        let quotesRegex = #/[\'’]/#
+        let whitespaceCollapseRegex = #/\s{2,}/#
+
+        return diacriticInsensitiveLowercaseInfo
+            .replacing(specialCharactersRegex, with: " ")
+            .replacing(quotesRegex, with: "")
+            .replacing(whitespaceCollapseRegex, with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func getRandomSongs(_ commonSongs: inout [Song]) -> [Song] {
+        var chosenSongs: [Song] = []
+
+        var remainingSongs = songLimit
+        while (remainingSongs > 0 && commonSongs.count > 0) {
+            chosenSongs.append(commonSongs.remove(at: commonSongs.indices.randomElement()!))
+            remainingSongs -= 1
+        }
+
+        return chosenSongs
     }
 }

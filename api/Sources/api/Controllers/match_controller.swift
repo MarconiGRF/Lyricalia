@@ -30,7 +30,11 @@ struct MatchController: RouteCollection {
     func create(req: Request) async throws -> String {
         let matchRequest = try req.content.decode(CreateMatchRequest.self)
 
-        let matchUUID = MatchStateManager.instance.create(songLimit: matchRequest.songLimit, db: req.db)
+        let matchUUID = MatchStateManager.instance.create(
+            songLimit: matchRequest.songLimit,
+            db: req.db,
+            lyricsDB: req.db(.lyrics)
+        )
 
         return matchUUID
     }
@@ -44,10 +48,10 @@ struct MatchController: RouteCollection {
 
             switch command[0] {
             case "host":
-                handleHostCommand(command[1..<command.count], matchId, ws, req.db)
+                handleHostCommand(command[1..<command.count], matchId, ws, req.db(.sqlite))
 
             case "player":
-                handlePlayerMessage(command[1..<command.count], matchId, ws, req.db)
+                handlePlayerMessage(command[1..<command.count], matchId, ws, req.db(.sqlite))
 
             default:
                 print("???")
