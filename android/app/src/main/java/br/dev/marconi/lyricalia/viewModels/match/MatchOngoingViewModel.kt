@@ -6,10 +6,13 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import br.dev.marconi.lyricalia.enums.HostCommands
+import br.dev.marconi.lyricalia.enums.MatchMessages
 import br.dev.marconi.lyricalia.enums.PlayerMessages
+import br.dev.marconi.lyricalia.repositories.match.MatchChallengeSet
 import br.dev.marconi.lyricalia.repositories.match.MatchWebSocket
 import br.dev.marconi.lyricalia.repositories.user.User
 import br.dev.marconi.lyricalia.utils.StorageUtils
+import com.google.gson.Gson
 import java.io.File
 
 class MatchOngoingViewModel(
@@ -25,6 +28,7 @@ class MatchOngoingViewModel(
     private val baseUrl: String
     private val currentUser: User
     private val ws = MatchWebSocket()
+    private var challengeSet: MatchChallengeSet? = null
 
     init {
         val serverIp = StorageUtils(filesDir).retrieveServerIp()
@@ -41,7 +45,12 @@ class MatchOngoingViewModel(
                 lifecycleScope,
                 {
                     Log.d("IF1001_P3_LYRICALIA", "Match message received: $it")
-                    actionable.value = it.split("$")
+                    if (it.startsWith(MatchMessages.RECEIVABLE_READY_FULL)) {
+                        challengeSet = Gson().fromJson(it.split("$")[2], MatchChallengeSet::class.java)
+                        actionable.value = listOf("match", "ready")
+                    } else {
+                        actionable.value = it.split("$")
+                    }
                 },
                 { hostOnline.value = it }
             )

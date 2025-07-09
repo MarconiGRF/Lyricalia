@@ -8,7 +8,7 @@ struct PlayerSubmission {
     var submission: String = ""
 }
 
-class PlayingUser {
+class PlayingUser: @unchecked Sendable {
     let user: User
 
     var isReady: Bool
@@ -52,7 +52,7 @@ class Match: @unchecked Sendable {
 
             if (!isHostIn) {
                 for player in players {
-                    do { try await player.ws.send(HostCommands.RECEIVABLE_END.rawValue) }
+                    Task { do { try await player.ws.send(HostCommands.RECEIVABLE_END.rawValue) } }
                 }
             }
         }}
@@ -70,7 +70,7 @@ class Match: @unchecked Sendable {
                     )
                 }
                 catch {
-                    print("Could not communicate with player \(player.user.id!), assuming disconnected and removing.")
+                    print("    !!! Could not communicate with player \(player.user.id!), assuming disconnected and removing.")
                     removablePlayers.append(player.user.id!)
                 }
             }
@@ -151,13 +151,11 @@ class Match: @unchecked Sendable {
             }
 
             for player in players {
-                try await player.ws.send(
-                    PlayerMessages.LEFT.rawValue + playerId.uuidString
-                )
+                try await player.ws.send(PlayerMessages.LEFT.rawValue + playerId.uuidString)
             }
 
         } catch {
-            print("Failed to remove player \(playerId.uuidString) due to \(error)")
+            print("    !!! Failed to remove player \(playerId.uuidString) due to \(error)")
         }
     }
 
@@ -171,18 +169,18 @@ class Match: @unchecked Sendable {
             player!.ws = ws
 
             if (allReady) {
-                print("All players ready!")
-
-                Task { try await process() }
+                print("    -> All players ready!")
 
                 for player in players {
-                    try await player.ws.send(MatchMessages.PROCESSING.rawValue)
+                    Task { try await player.ws.send(MatchMessages.PROCESSING.rawValue) }
                 }
+
+                Task { try await process() }
             } else {
                 try await player!.ws.send(MatchMessages.WAITING.rawValue)
             }
         } catch {
-            print("Failed to ack player readinesss \(error)")
+            print("    !!! Failed to ack player readinesss \(error)")
         }
     }
 
@@ -192,10 +190,34 @@ class Match: @unchecked Sendable {
         do {
             try await findCommonSongsOrEndMatch()
                       getRandomSongs()
-            await     fetchLyrics()
+                await fetchLyrics()
                       createLyricalChallenges()
+            try await sendChallenges()
         } catch {
-            print("Error processing match's songs -> \(error)")
+            print("    !!! Error processing match's songs -> \(error)")
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+    private func sendChallenges() async throws {
+        for player in players {
+            do {
+                let challengeSet = MatchChallengeSet(self.chosenSongs, self.lyricalChallenges)
+
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = .withoutEscapingSlashes
+                let jsonifiedChallenge = String(data: try encoder.encode(challengeSet), encoding: .utf8)!
+
+                try await player.ws.send(MatchMessages.READY.rawValue + jsonifiedChallenge)
+            } catch { print("    !!! Couldn't send challenge to player \(player.user.id!) due to -> \(error)") }
         }
     }
 
@@ -215,8 +237,12 @@ class Match: @unchecked Sendable {
             self.lyricsOriginalVerses[spotifyId] = excerptVerses
 
             if (excerptVerses.count == 2) {
-                excerptVerses[(0..<1).randomElement()!] = ""
+                let deletableVerseIndex = (0..<1).randomElement()!
+                let deletableVerse = excerptVerses[deletableVerseIndex]
+
+                excerptVerses[deletableVerseIndex] = "lyChal_\(deletableVerse.count)"
                 lyricalChallenges[spotifyId] = excerptVerses
+
                 continue
             }
 
@@ -225,7 +251,7 @@ class Match: @unchecked Sendable {
                 case ExcerptSection.BEGGINING:
                     var idx = 0
                     while (idx < deletionAmount) {
-                        excerptVerses[idx] = ""
+                        excerptVerses[idx] = "lyChal_\(excerptVerses[idx].count)"
                         idx += 1
                     }
                     lyricalChallenges[spotifyId] = excerptVerses
@@ -233,7 +259,7 @@ class Match: @unchecked Sendable {
                 case ExcerptSection.MIDDLE:
                     var idx = deletionAmount - 1
                     while (idx < (deletionAmount - 1) + deletionAmount && idx < excerptVerses.count) {
-                        excerptVerses[idx] = ""
+                        excerptVerses[idx] = "lyChal_\(excerptVerses[idx].count)"
                         idx += 1
                     }
                     lyricalChallenges[spotifyId] = excerptVerses
@@ -241,7 +267,7 @@ class Match: @unchecked Sendable {
                 case ExcerptSection.ENDING:
                     var idx = excerptVerses.count - 1
                     while ( (idx > excerptVerses.count - deletionAmount) && idx >= 0 ) {
-                        excerptVerses[idx] = ""
+                        excerptVerses[idx] = "lyChal_\(excerptVerses[idx].count)"
                         idx -= 1
                     }
                     lyricalChallenges[spotifyId] = excerptVerses
@@ -268,11 +294,11 @@ class Match: @unchecked Sendable {
 
                 if lyric.count > 0 { self.lyrics[song.spotifyId] = lyric[0] }
                 else {
-                    print("Lyric not found for song '\(normalizedArtistName)' - '\(normalizedSongName)'")
+                    print("    -> Lyric not found for song '\(normalizedArtistName)' - '\(normalizedSongName)'")
                 }
             }
         } catch {
-            print("Failed to fetch lyrics -> \(error)")
+            print("    !!! Failed to fetch lyrics -> \(error)")
         }
     }
 
@@ -320,10 +346,10 @@ class Match: @unchecked Sendable {
                 for player in players {
                     try await player.ws.send(MatchMessages.NO_SONGS.rawValue)
                 }
-                return
+                throw LyricaliaAPIError.notFound("No common songs found for the current player set")
             }
         } catch {
-            print("Failed to find common songs between users due to -> \(error)")
+            print("    !!! Failed to find common songs between users due to -> \(error)")
             throw error
         }
     }

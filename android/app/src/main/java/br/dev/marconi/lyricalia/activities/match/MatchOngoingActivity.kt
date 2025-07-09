@@ -62,6 +62,15 @@ class MatchOngoingActivity: AppCompatActivity() {
         when (messageParts[1]) {
             MatchMessages.RECEIVABLE_WAITING -> { updateLoadingHint("Esperando outros jogadores...") }
             MatchMessages.RECEIVABLE_PROCESSING -> { updateLoadingHint("Pensando nas letras...") }
+            MatchMessages.RECEIVABLE_READY -> {
+                updateLoadingHint("Vamos lá!")
+                lifecycleScope.launch {
+                    delay(1000);
+                    gracefullyHideLoading()
+                    delay(1000);
+                    // Tell the server player$challenge$ready
+                }
+            }
             else -> { toastUnknownMessage("1 " + messageParts.joinToString("$")) }
         }
     }
@@ -182,6 +191,31 @@ class MatchOngoingActivity: AppCompatActivity() {
             binding.mainContent.visibility = VISIBLE
             isGclefAnimated = false
         }
+    }
+
+    private fun gracefullyHideLoading() {
+        binding.gclef.animate()
+            .alpha(0f)
+            .setDuration(750)
+            .setListener(
+                object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        binding.gclef.visibility = GONE
+                    }
+                }
+            )
+            .start()
+        binding.loadingHint.animate()
+            .alpha(0f)
+            .setDuration(750)
+            .setListener(
+                object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        binding.loadingHint.visibility = GONE
+                    }
+                }
+            )
+            .start()
     }
 
     private fun ceaseMatch() {

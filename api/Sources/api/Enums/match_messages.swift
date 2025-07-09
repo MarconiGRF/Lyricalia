@@ -1,6 +1,6 @@
 enum MatchMessages: String {
     case WAITING = "match$waiting"
-    case READY = "match$ready"
+    case READY = "match$ready$"
     case PROCESSING = "match$processing"
     case NO_SONGS = "match$no_songs"
 }

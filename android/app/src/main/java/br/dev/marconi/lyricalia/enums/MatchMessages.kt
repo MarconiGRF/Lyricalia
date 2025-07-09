@@ -8,6 +8,7 @@ class MatchMessages {
         const val RECEIVABLE_PROCESSING = "processing"
         const val RECEIVABLE_PLAYERS = "players"
         const val RECEIVABLE_READY = "ready"
+        const val RECEIVABLE_READY_FULL = "$ENTITY\$ready"
         const val RECEIVABLE_PROGRESS = "progress"
         const val RECEIVABLE_PODIUM = "podium"
 

@@ -1,7 +1,7 @@
 import Fluent
 import Vapor
 
-final class Song: Model, @unchecked Sendable {
+final class Song: Model, Codable, @unchecked Sendable {
     static let schema = "songs"
 
     @ID(key: .id)
@@ -18,8 +18,6 @@ final class Song: Model, @unchecked Sendable {
 
     @Siblings(through: UserSong.self, from: \.$song, to: \.$user)
     public var users: [User]
-
-    var lyricChallenge: String?
 
     init () { }
 
