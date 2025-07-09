@@ -28,12 +28,18 @@ class Match: @unchecked Sendable {
     let db: any Database
     let lyricsDB: any Database
 
-    var allReady: Bool {
-        get { players.compactMap{ $0.isReady }.reduce(true) { $0 && $1 } }
-    }
     var hostId: UUID?
     var commonSongs: [Song] = []
     var chosenSongs: [Song] = []
+    var lyrics: [String : Lyric] = [:]
+
+    // spotifySongId -> Verses
+    var lyricsOriginalVerses: [String : [String]] = [:]
+    var lyricalChallenges: [String : [String]] = [:]
+
+    var allReady: Bool {
+        get { players.compactMap{ $0.isReady }.reduce(true) { $0 && $1 } }
+    }
     var players: [PlayingUser] = [] {
         didSet { Task {
             var isHostIn = false
@@ -184,53 +190,83 @@ class Match: @unchecked Sendable {
         print("Processing match...")
 
         do {
-            let userIds = self.players.compactMap{ $0.user.id }
-
-            var commonSongs = try await (self.db as! any SQLDatabase).raw("""
-                SELECT * FROM songs
-                WHERE id IN (
-                    SELECT song_id FROM 'users+songs'
-                    WHERE user_id IN (\( self.players.compactMap{ "'\($0.user.id!.uuidString)'" }.joined(separator: ",") ))
-                    GROUP BY song_id HAVING COUNT(DISTINCT user_id) = \(bind: userIds.count)
-                )
-                """)
-                .all(decodingFluent: Song.self)
-
-            if (commonSongs.count == 0) {
-                for player in players {
-                    try await player.ws.send(MatchMessages.NO_SONGS.rawValue)
-                }
-                return
-            }
-
-            let chosenSongs = getRandomSongs(&commonSongs)
-            let lyrics = await fetchLyrics(chosenSongs)
+            try await findCommonSongsOrEndMatch()
+                      getRandomSongs()
+            await     fetchLyrics()
+                      createLyricalChallenges()
         } catch {
             print("Error processing match's songs -> \(error)")
         }
     }
 
-    private func fetchLyrics(_ songs: [Song]) async  -> [String : Lyric] {
-        var lyrics: [String : Lyric] = [:]
+    private func createLyricalChallenges() {
+        for (spotifyId, lyric) in self.lyrics {
+            // Guaranteeing that no 1-verse excerpt is selected.
+            var backoffLimit = 0
+            var excerptVerses = [""]
+            while (excerptVerses.count == 1 && backoffLimit <= 5) {
+                excerptVerses = lyric.plainLyrics
+                    .components(separatedBy: "\n\n").randomElement()!.components(separatedBy: "\n")
+                backoffLimit += 1
+            }
+            if (backoffLimit == 6 || excerptVerses.count <= 1) { continue }
 
+            let deletionAmount = Int(ceil(Double(excerptVerses.count) / Double(3)))
+            self.lyricsOriginalVerses[spotifyId] = excerptVerses
+
+            if (excerptVerses.count == 2) {
+                excerptVerses[(0..<1).randomElement()!] = ""
+                lyricalChallenges[spotifyId] = excerptVerses
+                continue
+            }
+
+            // Delete verses!
+            switch ExcerptSection.random() {
+                case ExcerptSection.BEGGINING:
+                    var idx = 0
+                    while (idx < deletionAmount) {
+                        excerptVerses[idx] = ""
+                        idx += 1
+                    }
+                    lyricalChallenges[spotifyId] = excerptVerses
+
+                case ExcerptSection.MIDDLE:
+                    var idx = deletionAmount - 1
+                    while (idx < (deletionAmount - 1) + deletionAmount && idx < excerptVerses.count) {
+                        excerptVerses[idx] = ""
+                        idx += 1
+                    }
+                    lyricalChallenges[spotifyId] = excerptVerses
+
+                case ExcerptSection.ENDING:
+                    var idx = excerptVerses.count - 1
+                    while ( (idx > excerptVerses.count - deletionAmount) && idx >= 0 ) {
+                        excerptVerses[idx] = ""
+                        idx -= 1
+                    }
+                    lyricalChallenges[spotifyId] = excerptVerses
+            }
+        }
+    }
+
+    private func fetchLyrics() async  {
         do {
-            for song in songs {
+            for song in chosenSongs {
                 let normalizedSongName = normalizeSongInfo(songInfo: song.name)
                 let normalizedArtistName = normalizeSongInfo(songInfo: song.artist)
 
                 let lyric = try await (self.lyricsDB as! any SQLDatabase).raw("""
-                SELECT plain_lyrics, synced_lyrics, track_id FROM lyrics
-                WHERE id IN (
-                    SELECT last_lyrics_id FROM tracks
-                    WHERE
-                        artist_name_lower = '\(normalizedArtistName)' AND name_lower = '\(normalizedSongName)'
+                    SELECT plain_lyrics, synced_lyrics, track_id FROM lyrics
+                    WHERE id IN (
+                        SELECT last_lyrics_id FROM tracks
+                        WHERE
+                            artist_name_lower = '\(normalizedArtistName)' AND name_lower = '\(normalizedSongName)'
+                        LIMIT 1
+                    )
                     LIMIT 1
-                )
-                LIMIT 1
-                """)
-                .all(decodingFluent: Lyric.self)
+                    """).all(decodingFluent: Lyric.self)
 
-                if lyric.count > 0 { lyrics[song.spotifyId] = lyric[0] }
+                if lyric.count > 0 { self.lyrics[song.spotifyId] = lyric[0] }
                 else {
                     print("Lyric not found for song '\(normalizedArtistName)' - '\(normalizedSongName)'")
                 }
@@ -238,8 +274,6 @@ class Match: @unchecked Sendable {
         } catch {
             print("Failed to fetch lyrics -> \(error)")
         }
-
-        return lyrics
     }
 
     private func normalizeSongInfo(songInfo: String) -> String {
@@ -256,15 +290,41 @@ class Match: @unchecked Sendable {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func getRandomSongs(_ commonSongs: inout [Song]) -> [Song] {
+    private func getRandomSongs() {
         var chosenSongs: [Song] = []
 
         var remainingSongs = songLimit
-        while (remainingSongs > 0 && commonSongs.count > 0) {
-            chosenSongs.append(commonSongs.remove(at: commonSongs.indices.randomElement()!))
+        while (remainingSongs > 0 && self.commonSongs.count > 0) {
+            chosenSongs.append(self.commonSongs.remove(at: commonSongs.indices.randomElement()!))
             remainingSongs -= 1
         }
 
-        return chosenSongs
+        self.chosenSongs = chosenSongs
+    }
+
+    private func findCommonSongsOrEndMatch() async throws {
+        do {
+            let userIds = self.players.compactMap{ $0.user.id }
+
+            commonSongs = try await (self.db as! any SQLDatabase).raw("""
+                SELECT * FROM songs
+                WHERE id IN (
+                    SELECT song_id FROM 'users+songs'
+                    WHERE user_id IN (\( self.players.compactMap{ "'\($0.user.id!.uuidString)'" }.joined(separator: ",") ))
+                    GROUP BY song_id HAVING COUNT(DISTINCT user_id) = \(bind: userIds.count)
+                )
+                """)
+                .all(decodingFluent: Song.self)
+
+            if (commonSongs.count == 0) {
+                for player in players {
+                    try await player.ws.send(MatchMessages.NO_SONGS.rawValue)
+                }
+                return
+            }
+        } catch {
+            print("Failed to find common songs between users due to -> \(error)")
+            throw error
+        }
     }
 }

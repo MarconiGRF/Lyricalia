@@ -111,7 +111,7 @@
                 android:textStyle="bold"
                 android:fontFamily="@font/domine"
                 android:textColor="@color/lyDarkerGray"
-                android:textSize="24sp"
+                android:textSize="22sp"
                 android:textAlignment="center"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"

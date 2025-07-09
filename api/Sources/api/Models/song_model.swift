@@ -19,6 +19,8 @@ final class Song: Model, @unchecked Sendable {
     @Siblings(through: UserSong.self, from: \.$song, to: \.$user)
     public var users: [User]
 
+    var lyricChallenge: String?
+
     init () { }
 
     init(
