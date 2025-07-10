@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/mainLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/menu"
         android:weightSum="1"
         android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:background="@color/lyWhite"
         android:padding="10dp"
-        tools:context=".activities.MenuActivity"
+        tools:context=".activities.match.MatchOngoingActivity"
         android:clipToPadding="false">
 
+        <!-- Header -->
         <ImageButton
             android:id="@+id/closeButton"
             android:minWidth="50dp"
@@ -32,7 +33,6 @@
             app:layout_constraintTop_toTopOf="@id/header"
             app:layout_constraintBottom_toBottomOf="@id/header"
             app:layout_constraintHorizontal_bias="0" />
-
         <TextView
             android:id="@+id/header"
             android:layout_width="wrap_content"
@@ -46,6 +46,21 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/challengeIndex"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:textColor="@color/lyDarkerGray"
+            android:text="0/5"
+            android:fontFamily="@font/domine"
+            android:textSize="28sp"
+            android:visibility="gone"
+            android:layout_marginRight="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/header"
+            app:layout_constraintBottom_toBottomOf="@id/header"/>
+        <!-- Header -->
 
         <View
             android:id="@+id/divider"
@@ -54,7 +69,7 @@
             android:layout_marginStart="-10dp"
             android:layout_marginTop="10dp"
             android:layout_marginEnd="-10dp"
-            android:alpha="0"
+
             android:background="@drawable/bottom_only_shade"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -95,7 +110,7 @@
         <!-- GClef and Loader -->
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/mainContent"
+            android:id="@+id/currentChallengeHint"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -122,12 +137,12 @@
                 android:id="@+id/songNameHint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:layout_constraintTop_toTopOf="parent"
                 android:text="SongName"
                 android:textAlignment="center"
                 android:fontFamily="@font/domine"
                 android:textSize="40dp"
                 android:textFontWeight="600"
+                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -142,7 +157,21 @@
                 app:layout_constraintTop_toBottomOf="@id/songNameHint"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/mainContent"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider"
+            app:layout_constraintVertical_bias="0"
+            android:layout_marginTop="10dp"
+            android:paddingHorizontal="10dp"
+            android:orientation="vertical"
+            android:visibility="gone">
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

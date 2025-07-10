@@ -11,7 +11,7 @@
         android:orientation="horizontal"
         android:background="@color/lyWhite"
         android:padding="10dp"
-        tools:context=".activities.MenuActivity"
+        tools:context=".activities.match.MatchCreateActivity"
         android:clipToPadding="false">
 
         <ImageButton

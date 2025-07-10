@@ -12,6 +12,7 @@ class PlayerMessages {
         fun LEAVE(userId: String) = "player\$leave$$userId"
         fun READY(userId: String) = "player\$ready$$userId"
         fun CHALLENGE_READY(userId: String) = "player\$challenge_ready$$userId"
+        fun CHALLENGE_COUNTDOWN(userId: String) = "player\$challenge_countdown$$userId"
 
         // RECEIVABLES
         fun JOINED(userId: String) = "player\$joined$$userId"
