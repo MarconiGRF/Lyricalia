@@ -29,4 +29,5 @@
     <string name="join">Entrar</string>
     <string name="error_match_cannot_join">Não foi possível entrar na sala :(</string>
     <string name="matchId">Nome da sala</string>
+    <string name="hint_fill_lyrics">Complete a letra de...</string>
 </resources>

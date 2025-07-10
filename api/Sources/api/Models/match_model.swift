@@ -37,6 +37,21 @@ class Match: @unchecked Sendable {
     var lyricsOriginalVerses: [String : [String]] = [:]
     var lyricalChallenges: [String : [String]] = [:]
 
+    var currentChallengeIndex: Int? {
+        didSet {
+            if (currentChallengeIndex == nil) { return }
+
+            if (currentChallengeIndex! <= chosenSongs.count - 1) {
+                for player in players {
+                    Task { do { try await player.ws.send(MatchMessages.CHALLENGE.rawValue + "\(currentChallengeIndex!)") } }
+                }
+            } else {
+                for player in players {
+                    Task { do { try await player.ws.send(MatchMessages.CHALLENGE_END.rawValue) } }
+                }
+            }
+        }
+    }
     var allReady: Bool {
         get { players.compactMap{ $0.isReady }.reduce(true) { $0 && $1 } }
     }
@@ -173,6 +188,7 @@ class Match: @unchecked Sendable {
 
                 for player in players {
                     Task { try await player.ws.send(MatchMessages.PROCESSING.rawValue) }
+                    player.isReady = false
                 }
 
                 Task { try await process() }
@@ -198,6 +214,27 @@ class Match: @unchecked Sendable {
         }
     }
 
+    func ackChallenge(playerId: String) async {
+        do {
+            let player = players.first { $0.user.id!.uuidString == playerId }
+            if (player == nil) { throw LyricaliaAPIError.inconsistency("No player found to be ready for challenge with id \(playerId)") }
+            player!.isReady = true
+
+            if (allReady) {
+                print("    -> All players ready to challenge!")
+
+                if (currentChallengeIndex == nil) {
+                    currentChallengeIndex = 0
+                } else {
+                    currentChallengeIndex! += 1
+                }
+
+                players.forEach { $0.isReady = false }
+            }
+        } catch {
+            print("    !!! Failed to ack player readinesss for challenge -> \(error)")
+        }
+    }
 
 
 

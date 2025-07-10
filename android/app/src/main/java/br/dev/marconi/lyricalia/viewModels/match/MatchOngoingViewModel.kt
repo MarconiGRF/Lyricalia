@@ -24,11 +24,11 @@ class MatchOngoingViewModel(
 
     var matchId: String = ""
     var isHost: Boolean = false
+    var challengeSet: MatchChallengeSet? = null
 
     private val baseUrl: String
     private val currentUser: User
     private val ws = MatchWebSocket()
-    private var challengeSet: MatchChallengeSet? = null
 
     init {
         val serverIp = StorageUtils(filesDir).retrieveServerIp()
@@ -37,7 +37,7 @@ class MatchOngoingViewModel(
         currentUser = StorageUtils(filesDir).retrieveUser()!!
     }
 
-    fun connectAsPlayer() {
+    fun connectToMatch() {
         try {
             ws.connect(
                 StorageUtils(filesDir).retrieveServerIp(),
@@ -59,6 +59,10 @@ class MatchOngoingViewModel(
         } catch (ex: Exception) {
             throw Exception("Failed to join match as player: ${ex.message}")
         }
+    }
+
+    fun notifyReadinessToChallenge() {
+        ws.send(PlayerMessages.CHALLENGE_READY(currentUser.id!!))
     }
 
     fun endMatch() {

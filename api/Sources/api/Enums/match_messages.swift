@@ -3,4 +3,6 @@ enum MatchMessages: String {
     case READY = "match$ready$"
     case PROCESSING = "match$processing"
     case NO_SONGS = "match$no_songs"
+    case CHALLENGE = "match$challenge$"
+    case CHALLENGE_END = "match$challenge$end"
 }

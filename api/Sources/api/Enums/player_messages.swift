@@ -3,6 +3,7 @@ enum PlayerMessages: String {
     case JOIN = "join"
     case LEAVE = "leave"
     case READY = "ready"
+    case CHALLENGE_READY = "challenge_ready"
 
     // RECEIVABLES
     case JOINED = "player$joined$"

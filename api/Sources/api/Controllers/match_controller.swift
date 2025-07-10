@@ -81,6 +81,10 @@ struct MatchController: RouteCollection {
                     print("    -> Player ready")
                     Task { await match.ackReadiness(playerId: message[2], ws: ws) }
 
+                case PlayerMessages.CHALLENGE_READY.rawValue:
+                    print("    -> Player ready for challenge")
+                    Task { await match.ackChallenge(playerId: message[2]) }
+
                 default:
                     throw LyricaliaAPIError.invalidCommand
             }

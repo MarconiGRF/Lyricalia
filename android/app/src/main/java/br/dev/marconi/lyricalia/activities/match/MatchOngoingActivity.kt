@@ -17,12 +17,12 @@ import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.databinding.ActivityMatchOngoingBinding
 import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.MatchMessages
-import br.dev.marconi.lyricalia.enums.PlayerMessages
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.viewModels.match.MatchOngoingViewModel
 import br.dev.marconi.lyricalia.viewModels.match.MatchOngoingViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.Int
 
 class MatchOngoingActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchOngoingBinding
@@ -40,7 +40,7 @@ class MatchOngoingActivity: AppCompatActivity() {
 
         setupCommonUI()
 
-        viewModel.connectAsPlayer()
+        viewModel.connectToMatch()
         showLoadingOverlays(true)
     }
 
@@ -62,17 +62,39 @@ class MatchOngoingActivity: AppCompatActivity() {
         when (messageParts[1]) {
             MatchMessages.RECEIVABLE_WAITING -> { updateLoadingHint("Esperando outros jogadores...") }
             MatchMessages.RECEIVABLE_PROCESSING -> { updateLoadingHint("Pensando nas letras...") }
+            MatchMessages.RECEIVABLE_CHALLENGE -> { processChallengeActionable(messageParts) }
             MatchMessages.RECEIVABLE_READY -> {
                 updateLoadingHint("Vamos lá!")
                 lifecycleScope.launch {
                     delay(1000);
                     gracefullyHideLoading()
                     delay(1000);
-                    // Tell the server player$challenge$ready
+                    viewModel.notifyReadinessToChallenge()
                 }
             }
             else -> { toastUnknownMessage("1 " + messageParts.joinToString("$")) }
         }
+    }
+
+    private fun processChallengeActionable(messageParts: List<String>) {
+        val challengeInfo = messageParts[2].toIntOrNull()
+        when (challengeInfo) {
+            null -> { }
+            in 0 .. 100 -> { startChallenge(challengeInfo) }
+            else -> { toastUnknownMessage("2 " + messageParts.joinToString("$")) }
+        }
+    }
+
+    private fun startChallenge(challengeIndex: Int) {
+        binding.songNameHint.text = viewModel.challengeSet!!.songs[challengeIndex].name
+        binding.artistHint.text = viewModel.challengeSet!!.songs[challengeIndex].artist
+
+        binding.mainContent.alpha = 0f
+        binding.mainContent.visibility = VISIBLE
+        binding.mainContent.animate()
+            .alpha(1f)
+            .setDuration(550)
+            .start()
     }
 
     private fun setupCommonUI() {
@@ -121,6 +143,8 @@ class MatchOngoingActivity: AppCompatActivity() {
         viewModel.hostOnline.observe(this) {
             if (it == false) { ceaseMatch() }
         }
+
+        binding.header.text = viewModel.matchId
     }
 
     private fun toastUnknownMessage(message: String) {
