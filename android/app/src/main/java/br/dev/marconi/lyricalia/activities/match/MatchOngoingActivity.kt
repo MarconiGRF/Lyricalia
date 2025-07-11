@@ -4,21 +4,31 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.StyleSpan
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.animation.DecelerateInterpolator
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
+import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMatchOngoingBinding
 import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.MatchMessages
@@ -118,17 +128,112 @@ class MatchOngoingActivity: AppCompatActivity() {
         delay(3500)
 
         fadeHints()
-
-        // build text fields
-
-        // Set constraints of hint to release bottom constraint (AND DO IT ANIMATED)
+        buildChallengeFields(challengeIndex)
 
         // Setup player indicators on the bottom
+
+        // Tell the server you're ready to countdown
+    }
+
+    private fun buildChallengeFields(challengeIndex: Int) {
+        val lyrics = viewModel.challengeSet!!.challenges[viewModel.challengeSet!!.songs[challengeIndex].spotifyId]!!
+
+        var firstVerse = TextView(this)
+        firstVerse.id = View.generateViewId()
+        firstVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
+        firstVerse.setAutoSizeTextTypeWithDefaults(AUTO_SIZE_TEXT_TYPE_UNIFORM)
+        firstVerse.text = SpannableString("“${lyrics[0]}").also {
+            it.setSpan(
+                StyleSpan(Typeface.BOLD),
+                0, 1,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        val layoutParams = ConstraintLayout.LayoutParams(
+            resources.displayMetrics.widthPixels - 30,
+            30.fromDpToPx()
+        )
+
+        layoutParams.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.setMargins(0, 0, 0, 0)
+        firstVerse.elevation = 10f
+        firstVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 0)
+
+        firstVerse.layoutParams = layoutParams
+        binding.mainContent.addView(firstVerse)
+
+        var lastViewsId = firstVerse.id
+        var idx = 1
+
+        while (idx < lyrics.size) {
+            if (lyrics[idx].startsWith("lyChal_")) {
+                var subsequentVerse = EditText(this)
+                subsequentVerse.id = View.generateViewId()
+                subsequentVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
+                subsequentVerse.setAutoSizeTextTypeWithDefaults(AUTO_SIZE_TEXT_TYPE_UNIFORM)
+
+                val layoutParams = ConstraintLayout.LayoutParams(
+                    ///////////////////////////// TODO: SOLVE THE SIZE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    resources.displayMetrics.widthPixels - 30,
+                    30.fromDpToPx()
+                )
+
+                layoutParams.topToBottom = lastViewsId
+                layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+                layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+                layoutParams.setMargins(0, 0, 0, 0)
+                subsequentVerse.elevation = 10f
+                subsequentVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 0)
+
+                subsequentVerse.layoutParams = layoutParams
+                binding.mainContent.addView(subsequentVerse)
+                lastViewsId = subsequentVerse.id
+            } else {
+                var subsequentVerse = TextView(this)
+                subsequentVerse.id = View.generateViewId()
+                subsequentVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
+                subsequentVerse.setAutoSizeTextTypeWithDefaults(AUTO_SIZE_TEXT_TYPE_UNIFORM)
+                subsequentVerse.text = lyrics[idx]
+
+                val layoutParams = ConstraintLayout.LayoutParams(
+                    resources.displayMetrics.widthPixels - 30,
+                    30.fromDpToPx()
+                )
+
+                layoutParams.topToBottom = lastViewsId
+                layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+                layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+                layoutParams.setMargins(0, 0, 0, 0)
+                subsequentVerse.elevation = 10f
+                subsequentVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 0)
+
+                subsequentVerse.layoutParams = layoutParams
+                binding.mainContent.addView(subsequentVerse)
+                lastViewsId = subsequentVerse.id
+            }
+
+            idx++
+        }
+
+        // Do this to the last, append all fields and texts first
+        binding.mainContent.visibility = VISIBLE
     }
 
     private fun fadeHints() {
         binding.challengeHint.animate()
             .alpha(0f)
+            .setDuration(350)
+            .start()
+        binding.header.animate()
+            .alpha(0f)
+            .setDuration(350)
+            .start()
+        binding.divider.animate()
+            .alpha(1f)
             .setDuration(350)
             .start()
 

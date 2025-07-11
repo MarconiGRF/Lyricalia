@@ -10,8 +10,8 @@ class MatchStateManager: @unchecked Sendable {
         "ImagineDragons",
         "Maneskin",
         "Gaga",
-        "Beyonce",
-        "TaylorSwift",
+        "Bey",
+        "Taylor",
         "Foals",
         "DojaCat",
         "Charli",
@@ -19,8 +19,8 @@ class MatchStateManager: @unchecked Sendable {
         "Lana",
         "Lorde",
         "Muse",
-        "OliviaRod",
-        "SabrinaCarp",
+        "Olivia",
+        "Sabrina",
         "WolfAlice"
     ]
     private var adjectives = [
