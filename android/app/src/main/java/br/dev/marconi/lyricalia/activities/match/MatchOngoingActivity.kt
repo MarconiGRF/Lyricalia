@@ -117,36 +117,41 @@ class MatchOngoingActivity: AppCompatActivity() {
         //TODO: Check if this is really necessary or section are too slow between them due to animations
         delay(3500)
 
-        binding.challengeHint.animate()
-            .alpha(0f)
-            .setDuration(350)
-            .start()
-
-        TransitionManager.beginDelayedTransition(binding.mainLayout, AutoTransition().apply {
-                duration = 550
-                interpolator = DecelerateInterpolator()
-            })
-
-            ConstraintSet().also {
-                it.clone(binding.currentChallengeHint)
-
-                it.constrainWidth(binding.challengeHint.id, 0)
-                it.constrainHeight(binding.challengeHint.id, 0)
-                it.clear(binding.songNameHint.id, ConstraintSet.BOTTOM)
-
-                it.applyTo(binding.currentChallengeHint)
-            }
-            ConstraintSet().also {
-                it.clone(binding.mainLayout)
-                it.clear(binding.currentChallengeHint.id, ConstraintSet.BOTTOM)
-                it.applyTo(binding.mainLayout)
-            }
+        fadeHints()
 
         // build text fields
 
         // Set constraints of hint to release bottom constraint (AND DO IT ANIMATED)
 
         // Setup player indicators on the bottom
+    }
+
+    private fun fadeHints() {
+        binding.challengeHint.animate()
+            .alpha(0f)
+            .setDuration(350)
+            .start()
+
+        TransitionManager.beginDelayedTransition(binding.mainLayout, AutoTransition().apply {
+            duration = 550
+            interpolator = DecelerateInterpolator()
+        })
+
+        ConstraintSet().also {
+            it.clone(binding.currentChallengeHint)
+
+            it.constrainHeight(binding.challengeHint.id, 0)
+            it.clear(binding.songNameHint.id, ConstraintSet.BOTTOM)
+            it.constrainHeight(binding.songNameHint.id, 28.fromDpToPx())
+            it.constrainHeight(binding.artistHint.id, 18.fromDpToPx())
+
+            it.applyTo(binding.currentChallengeHint)
+        }
+        ConstraintSet().also {
+            it.clone(binding.mainLayout)
+            it.clear(binding.currentChallengeHint.id, ConstraintSet.BOTTOM)
+            it.applyTo(binding.mainLayout)
+        }
     }
 
     private fun setupCommonUI() {
@@ -306,4 +311,6 @@ class MatchOngoingActivity: AppCompatActivity() {
             }
             .create().show()
     }
+
+    private fun Int.fromDpToPx() = (this * resources.displayMetrics.density).toInt()
 }
