@@ -4,24 +4,36 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.LayerDrawable
+import android.inputmethodservice.InputMethodService
 import android.os.Bundle
+import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
+import android.view.Gravity
 import android.view.View
 import android.view.View.GONE
+import android.view.View.TEXT_ALIGNMENT_CENTER
 import android.view.View.VISIBLE
+import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.TextView
-import android.widget.TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
@@ -138,84 +150,139 @@ class MatchOngoingActivity: AppCompatActivity() {
     private fun buildChallengeFields(challengeIndex: Int) {
         val lyrics = viewModel.challengeSet!!.challenges[viewModel.challengeSet!!.songs[challengeIndex].spotifyId]!!
 
-        var firstVerse = TextView(this)
-        firstVerse.id = View.generateViewId()
-        firstVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
-        firstVerse.setAutoSizeTextTypeWithDefaults(AUTO_SIZE_TEXT_TYPE_UNIFORM)
-        firstVerse.text = SpannableString("“${lyrics[0]}").also {
-            it.setSpan(
-                StyleSpan(Typeface.BOLD),
-                0, 1,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
-
-        val layoutParams = ConstraintLayout.LayoutParams(
-            resources.displayMetrics.widthPixels - 30,
-            30.fromDpToPx()
-        )
-
-        layoutParams.topToTop = ConstraintLayout.LayoutParams.PARENT_ID
-        layoutParams.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
-        layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-        layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-        layoutParams.setMargins(0, 0, 0, 0)
-        firstVerse.elevation = 10f
-        firstVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 0)
-
-        firstVerse.layoutParams = layoutParams
-        binding.mainContent.addView(firstVerse)
-
-        var lastViewsId = firstVerse.id
-        var idx = 1
-
+        var idx = 0
         while (idx < lyrics.size) {
-            if (lyrics[idx].startsWith("lyChal_")) {
-                var subsequentVerse = EditText(this)
-                subsequentVerse.id = View.generateViewId()
-                subsequentVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
-                subsequentVerse.setAutoSizeTextTypeWithDefaults(AUTO_SIZE_TEXT_TYPE_UNIFORM)
-
-                val layoutParams = ConstraintLayout.LayoutParams(
-                    ///////////////////////////// TODO: SOLVE THE SIZE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    resources.displayMetrics.widthPixels - 30,
-                    30.fromDpToPx()
+            // Create a FrameLayout container for each verse
+            val verseContainer = FrameLayout(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
                 )
-
-                layoutParams.topToBottom = lastViewsId
-                layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-                layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-                layoutParams.setMargins(0, 0, 0, 0)
-                subsequentVerse.elevation = 10f
-                subsequentVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 0)
-
-                subsequentVerse.layoutParams = layoutParams
-                binding.mainContent.addView(subsequentVerse)
-                lastViewsId = subsequentVerse.id
-            } else {
-                var subsequentVerse = TextView(this)
-                subsequentVerse.id = View.generateViewId()
-                subsequentVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
-                subsequentVerse.setAutoSizeTextTypeWithDefaults(AUTO_SIZE_TEXT_TYPE_UNIFORM)
-                subsequentVerse.text = lyrics[idx]
-
-                val layoutParams = ConstraintLayout.LayoutParams(
-                    resources.displayMetrics.widthPixels - 30,
-                    30.fromDpToPx()
-                )
-
-                layoutParams.topToBottom = lastViewsId
-                layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
-                layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
-                layoutParams.setMargins(0, 0, 0, 0)
-                subsequentVerse.elevation = 10f
-                subsequentVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 0)
-
-                subsequentVerse.layoutParams = layoutParams
-                binding.mainContent.addView(subsequentVerse)
-                lastViewsId = subsequentVerse.id
+                clipChildren = false
+                clipToPadding = false
             }
 
+            binding.mainContent.clipChildren = false
+            binding.mainContent.clipToPadding = false
+
+            var subsequentVerse: View
+            if (!lyrics[idx].startsWith("lyChal_")) {
+                subsequentVerse = TextView(this)
+                subsequentVerse.id = View.generateViewId()
+                subsequentVerse.text = lyrics[idx]
+
+                subsequentVerse.layoutParams = FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER
+                )
+            } else {
+                subsequentVerse = EditText(this).apply {
+                    id = View.generateViewId()
+                    maxLines = Int.MAX_VALUE
+
+                    setSingleLine(false)
+                    inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
+                    setHorizontallyScrolling(false)
+                    setBackgroundColor(Color.TRANSPARENT)
+                    minHeight = 48.fromDpToPx()
+                }
+
+                val layerDrawable = LayerDrawable(arrayOf(
+                    Color.TRANSPARENT.toDrawable(),
+                    resources.getColor(R.color.lyDarkerGray, theme).toDrawable()
+                ))
+                layerDrawable.setLayerInset(1, 0, 0, 0, 0)
+                layerDrawable.setLayerHeight(1, 3.fromDpToPx())
+                layerDrawable.setLayerGravity(1, Gravity.BOTTOM)
+                subsequentVerse.background = layerDrawable
+
+                val layoutParams = FrameLayout.LayoutParams(
+                    resources.displayMetrics.widthPixels - 30.fromDpToPx(),
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.CENTER
+                )
+                subsequentVerse.layoutParams = layoutParams
+            }
+
+            subsequentVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
+            subsequentVerse.setTextColor(resources.getColor(R.color.lyDarkerGray, theme))
+            subsequentVerse.textSize = 20f
+            subsequentVerse.textAlignment = TEXT_ALIGNMENT_CENTER
+            subsequentVerse.elevation = 10f
+            subsequentVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 5.fromDpToPx())
+
+            // Add the verse to the container
+            verseContainer.addView(subsequentVerse)
+
+            // Add opening quotes for the first verse
+            if (idx == 0) {
+                val openingQuotes = TextView(this).apply {
+                    id = View.generateViewId()
+                    typeface = ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine)
+                    setTypeface(this.typeface, Typeface.BOLD)
+                    textSize = 42f
+                    textAlignment = TEXT_ALIGNMENT_CENTER
+                    setTextColor(resources.getColor(R.color.lyDarkerGray, theme))
+                    text = "“"
+                    isFocusable = false
+                    isClickable = false
+                    elevation = 11f
+
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        20.fromDpToPx()
+                    )
+                }
+
+                verseContainer.addView(openingQuotes)
+
+                subsequentVerse.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        subsequentVerse.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                        val params = openingQuotes.layoutParams as FrameLayout.LayoutParams
+                        params.leftMargin = subsequentVerse.left - 8.fromDpToPx()
+                        params.topMargin = subsequentVerse.top - 12.fromDpToPx()
+                        openingQuotes.layoutParams = params
+                    }
+                })
+            }
+
+            if (idx == lyrics.size - 1) {
+                val openingQuotes = TextView(this).apply {
+                    id = View.generateViewId()
+                    typeface = ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine)
+                    setTypeface(this.typeface, Typeface.BOLD)
+                    textSize = 42f
+                    textAlignment = TEXT_ALIGNMENT_CENTER
+                    setTextColor(resources.getColor(R.color.lyDarkerGray, theme))
+                    text = "”"
+                    isFocusable = false
+                    isClickable = false
+                    elevation = 11f
+
+                    layoutParams = FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.WRAP_CONTENT,
+                        20.fromDpToPx()
+                    )
+                }
+
+                verseContainer.addView(openingQuotes)
+
+                subsequentVerse.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                    override fun onGlobalLayout() {
+                        subsequentVerse.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                        val params = openingQuotes.layoutParams as FrameLayout.LayoutParams
+                        params.leftMargin = subsequentVerse.right - openingQuotes.width + 4.fromDpToPx()
+                        params.topMargin = subsequentVerse.top - 12.fromDpToPx()
+                        openingQuotes.layoutParams = params
+                    }
+                })
+            }
+
+            binding.mainContent.addView(verseContainer)
             idx++
         }
 
@@ -307,6 +374,21 @@ class MatchOngoingActivity: AppCompatActivity() {
         }
 
         binding.header.text = viewModel.matchId
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                val cf = currentFocus
+
+                if (cf != null && inputMethodManager.isActive(currentFocus)) {
+                    InputMethodService().requestHideSelf(0)
+                    cf.clearFocus()
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
     }
 
     private fun toastUnknownMessage(message: String) {

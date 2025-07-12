@@ -260,13 +260,13 @@ class MatchWaitingActivity: AppCompatActivity() {
             playerIndicatorInstance.animate()
                 .translationY(120f)
                 .setDuration(550)
-                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .setInterpolator(DecelerateInterpolator())
                 .start()
         } else {
             playerIndicatorInstance.animate()
                 .translationY(0f)
                 .setDuration(550)
-                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .setInterpolator(DecelerateInterpolator())
                 .start()
         }
     }
