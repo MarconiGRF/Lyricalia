@@ -30,10 +30,12 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.marginBottom
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.AutoTransition
@@ -122,28 +124,51 @@ class MatchOngoingActivity: AppCompatActivity() {
         val countdown = rawCountdown.split("/")
         if (countdown.size <= 1) { toastUnknownMessage("invalid countdown: "); return }
 
-        val percentage = countdown[1].toFloat() / countdown[0].toFloat()
-        lifecycleScope.launch {
-            animator = ValueAnimator.ofFloat(binding.animatedProgressBar.scaleX, percentage).apply {
-                duration = 250
+        val currentTime = countdown[1].toFloat()
+        if (currentTime == 0f) {
+            processTimesUp()
+        } else {
+            val percentage = currentTime / countdown[0].toFloat()
+            lifecycleScope.launch { updateProgressBar(percentage) }
 
-                addUpdateListener { animator ->
-                    val scale = animator.animatedValue as Float
-                    binding.animatedProgressBar.scaleX = scale
-                }
+            binding.header.alpha = 1f
+            binding.header.text = countdown[1]
 
-                start()
-            }
+            binding.submitButton.isClickable = true
+            binding.submitButton.visibility = VISIBLE
         }
+    }
 
-        binding.header.alpha = 1f
-        binding.header.text = countdown[1]
+    private fun processTimesUp() {
+        binding.animatedProgressBar.background = ContextCompat.getDrawable(applicationContext, R.drawable.rectangle_shape_red)
+        lifecycleScope.launch { updateProgressBar(1f) }
+        binding.header.text = "TEMPO!"
+        binding.header.setTextColor(resources.getColor(R.color.lyRed, theme))
 
-        binding.submitButton.visibility = VISIBLE
+        // TODO: Move this to Submit method
+        binding.submitButton.isClickable = false
+        binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGray, theme))
+        binding.submitButton.setTextColor(resources.getColor(R.color.lyWhite, theme))
+    }
+
+    private fun updateProgressBar(percentage: Float) {
+        animator = ValueAnimator.ofFloat(binding.animatedProgressBar.scaleX, percentage).apply {
+            duration = 250
+            addUpdateListener { animator ->
+                val scale = animator.animatedValue as Float
+                binding.animatedProgressBar.scaleX = scale
+            }
+            start()
+        }
     }
 
     @SuppressLint("SetTextI18n")
     private fun showChallengeHint(challengeIndex: Int) {
+        binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGray, theme))
+        binding.submitButton.setTextColor(resources.getColor(R.color.lyWhite, theme))
+        binding.submitButton.visibility = GONE
+        binding.submitButton.isClickable = false
+
         binding.songNameHint.text = viewModel.challengeSet!!.songs[challengeIndex].name
         binding.artistHint.text = viewModel.challengeSet!!.songs[challengeIndex].artist
 
@@ -500,9 +525,6 @@ class MatchOngoingActivity: AppCompatActivity() {
 
     private fun showLoadingOverlays(visible: Boolean) {
         if (visible) {
-//            binding.mainContent.visibility = INVISIBLE
-//            binding.currentChallengeHint.visibility = INVISIBLE
-
             lifecycleScope.launch { animateGClef() }
             binding.gclef.visibility = VISIBLE
             binding.gclef.animate()
@@ -519,8 +541,6 @@ class MatchOngoingActivity: AppCompatActivity() {
         } else {
             binding.gclef.visibility = GONE
             binding.loadingHint.visibility = GONE
-//            binding.currentChallengeHint.visibility = INVISIBLE
-//            binding.mainContent.visibility = INVISIBLE
             isGclefAnimated = false
         }
     }

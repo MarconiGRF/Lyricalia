@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer glow layer (largest, most transparent) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#20E86161" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+
+    <!-- Middle glow layer -->
+    <item android:left="2dp" android:top="2dp" android:right="2dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#40E86161" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+    <!-- Inner glow layer -->
+    <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#60E86161" />
+            <corners android:radius="9dp" />
+        </shape>
+    </item>
+
+    <item android:left="6dp" android:top="6dp" android:right="6dp" android:bottom="6dp">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
+            android:shape="rectangle">
+            <solid android:color="@color/lyRed" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+</layer-list>

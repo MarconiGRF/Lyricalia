@@ -33,7 +33,7 @@ class Match: @unchecked Sendable {
     var chosenSongs: [Song] = []
     var lyrics: [String : Lyric] = [:]
 
-    var totalTime = 10
+    var totalTime = 5
     var countdown: Int = -1 {
         didSet {
             if (countdown >= 0) {

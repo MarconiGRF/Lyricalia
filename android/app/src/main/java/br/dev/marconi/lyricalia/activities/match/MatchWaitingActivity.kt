@@ -176,7 +176,7 @@ class MatchWaitingActivity: AppCompatActivity() {
         binding.actionMatchButton.setTextColor(
             resources.getColor(R.color.lyWhite, theme)
         )
-        binding.actionMatchButton.setBackgroundColor(resources.getColor(R.color.lyDarkerGray, theme))
+        binding.actionMatchButton.setBackgroundColor(resources.getColor(R.color.lyGray, theme))
     }
 
     private fun ceaseMatch() {
