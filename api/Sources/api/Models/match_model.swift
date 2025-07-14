@@ -33,6 +33,25 @@ class Match: @unchecked Sendable {
     var chosenSongs: [Song] = []
     var lyrics: [String : Lyric] = [:]
 
+    var totalTime = 10
+    var countdown: Int = -1 {
+        didSet {
+            if (countdown >= 0) {
+                for player in players {
+                    Task {
+                        try await player.ws.send(MatchMessages.COUNTDOWN.rawValue + "\(totalTime)/\(countdown)")
+                    }
+                }
+                Task {
+                    // It's a countdown, wait 1s, then decrease...
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                    print("Counting down -1, currently at \(countdown)")
+                    countdown -= 1
+                }
+            }
+        }
+    }
+
     // spotifySongId -> Verses
     var lyricsOriginalVerses: [String : [String]] = [:]
     var lyricalChallenges: [String : [String]] = [:]
@@ -228,6 +247,24 @@ class Match: @unchecked Sendable {
                 } else {
                     currentChallengeIndex! += 1
                 }
+
+                players.forEach { $0.isReady = false }
+            }
+        } catch {
+            print("    !!! Failed to ack player readinesss for challenge -> \(error)")
+        }
+    }
+
+    func ackInput(playerId: String) async {
+        do {
+            let player = players.first { $0.user.id!.uuidString == playerId }
+            if (player == nil) { throw LyricaliaAPIError.inconsistency("No player found to be ready for challenge with id \(playerId)") }
+            player!.isReady = true
+
+            if (allReady) {
+                print("    -> All players ready to input!")
+
+                self.countdown = self.totalTime
 
                 players.forEach { $0.isReady = false }
             }

@@ -43,7 +43,6 @@ struct MatchController: RouteCollection {
         let matchId = req.parameters.get("match-id")!
 
         ws.onText { ws, text in
-            print("Processing '\(text)'")
             let command = text.components(separatedBy: "$")
 
             switch command[0] {
@@ -70,26 +69,30 @@ struct MatchController: RouteCollection {
 
             switch message[1] {
                 case PlayerMessages.JOIN.rawValue:
-                    print("    -> Player joining")
+                    print("  -> Player joining")
                     Task { try await match.addPlayer(playerId: message[2], ws: ws, db: db) }
 
                 case PlayerMessages.LEAVE.rawValue:
-                    print("    -> Player leaving")
+                    print("  -> Player leaving")
                     Task { await match.removePlayer(playerId: message[2]) }
 
                 case PlayerMessages.READY.rawValue:
-                    print("    -> Player ready")
+                    print("  -> Player ready")
                     Task { await match.ackReadiness(playerId: message[2], ws: ws) }
 
                 case PlayerMessages.CHALLENGE_READY.rawValue:
-                    print("    -> Player ready for challenge")
+                    print("  -> Player ready for challenge")
                     Task { await match.ackChallenge(playerId: message[2]) }
+
+                case PlayerMessages.INPUT_READY.rawValue:
+                    print("  -> Player ready for input")
+                    Task { await match.ackInput(playerId: message[2]) }
 
                 default:
                     throw LyricaliaAPIError.invalidCommand
             }
         } catch {
-            print("Error processing PLAYER command \(message.joined(by: "$"))")
+            print("  !!! Error processing PLAYER command \(message.joined(by: "$"))")
             print("    ---> \(error)")
         }
     }
@@ -105,16 +108,16 @@ struct MatchController: RouteCollection {
 
             switch command[1] {
                 case HostCommands.RECEIVABLE_SET.rawValue:
-                    print("    -> Setting host")
+                    print("  -> Setting host")
                     try match.setHost(hostId: command[2])
                     Task { try await match.addPlayer(playerId: command[2], ws: ws, db: db) }
 
                 case HostCommands.RECEIVABLE_START.rawValue:
-                    print("    -> Starting match")
+                    print("  -> Starting match")
                     match.start()
 
                 case HostCommands.RECEIVABLE_END.rawValue:
-                    print("    -> Ending match")
+                    print("  -> Ending match")
                     match.end()
                     MatchStateManager.instance.cease(matchId: matchId)
 
@@ -122,7 +125,7 @@ struct MatchController: RouteCollection {
                     throw LyricaliaAPIError.invalidCommand
             }
         } catch {
-            print("Error processing HOST command \(command.joined(by: "$"))")
+            print("  !!! Error processing HOST command \(command.joined(by: "$"))")
             print("    ---> \(error)")
         }
     }

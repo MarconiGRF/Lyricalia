@@ -5,4 +5,5 @@ enum MatchMessages: String {
     case NO_SONGS = "match$no_songs"
     case CHALLENGE = "match$challenge$"
     case CHALLENGE_END = "match$challenge$end"
+    case COUNTDOWN = "match$countdown$"
 }

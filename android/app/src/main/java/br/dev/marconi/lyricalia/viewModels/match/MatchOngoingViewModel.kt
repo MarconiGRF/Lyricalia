@@ -65,6 +65,10 @@ class MatchOngoingViewModel(
         ws.send(PlayerMessages.CHALLENGE_READY(currentUser.id!!))
     }
 
+    fun notifyReadinessToInput() {
+        ws.send(PlayerMessages.INPUT_READY(currentUser.id!!))
+    }
+
     fun endMatch() {
         ws.send(HostCommands.SENDABLE_END)
     }

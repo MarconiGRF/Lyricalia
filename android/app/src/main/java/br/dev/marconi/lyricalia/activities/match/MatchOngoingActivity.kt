@@ -2,6 +2,7 @@ package br.dev.marconi.lyricalia.activities.match
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.graphics.Color
@@ -28,7 +29,6 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toDrawable
@@ -56,6 +56,7 @@ class MatchOngoingActivity: AppCompatActivity() {
     private lateinit var matchPlayers: MatchPlayers
 
     private var isGclefAnimated = false
+    private var animator: ValueAnimator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -88,11 +89,12 @@ class MatchOngoingActivity: AppCompatActivity() {
 
     private fun processMatchActionable(messageParts: List<String>) {
         when (messageParts[1]) {
-            MatchMessages.RECEIVABLE_WAITING -> updateLoadingHint("Esperando outros jogadores...")
-            MatchMessages.RECEIVABLE_PROCESSING -> updateLoadingHint("Pensando nas letras...")
+            MatchMessages.RECEIVABLE_WAITING -> updateLoadingHint("ESPERANDO JOGADORES...")
+            MatchMessages.RECEIVABLE_PROCESSING -> updateLoadingHint("LETRANDO...")
             MatchMessages.RECEIVABLE_CHALLENGE -> processChallengeActionable(messageParts)
+            MatchMessages.RECEIVABLE_COUNTDOWN -> processCountdown(messageParts[2])
             MatchMessages.RECEIVABLE_READY -> {
-                updateLoadingHint("Vamos lá!")
+                updateLoadingHint("VAMOS LÁ!")
                 lifecycleScope.launch {
                     delay(1000);
                     gracefullyHideLoading()
@@ -108,9 +110,36 @@ class MatchOngoingActivity: AppCompatActivity() {
         val challengeInfo = messageParts[2].toIntOrNull()
         when (challengeInfo) {
             null ->  toastUnknownMessage("null challenge actionable")
-            in 0 .. 100 -> showChallengeHint(challengeInfo)
+            in 0 .. 100 -> {
+                buildPlayerIndicators()
+                showChallengeHint(challengeInfo)
+            }
             else -> toastUnknownMessage("2 " + messageParts.joinToString("$"))
         }
+    }
+
+    private fun processCountdown(rawCountdown: String) {
+        val countdown = rawCountdown.split("/")
+        if (countdown.size <= 1) { toastUnknownMessage("invalid countdown: "); return }
+
+        val percentage = countdown[1].toFloat() / countdown[0].toFloat()
+        lifecycleScope.launch {
+            animator = ValueAnimator.ofFloat(binding.animatedProgressBar.scaleX, percentage).apply {
+                duration = 250
+
+                addUpdateListener { animator ->
+                    val scale = animator.animatedValue as Float
+                    binding.animatedProgressBar.scaleX = scale
+                }
+
+                start()
+            }
+        }
+
+        binding.header.alpha = 1f
+        binding.header.text = countdown[1]
+
+        binding.submitButton.visibility = VISIBLE
     }
 
     @SuppressLint("SetTextI18n")
@@ -129,7 +158,6 @@ class MatchOngoingActivity: AppCompatActivity() {
             .setListener(
                 object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
-                        buildPlayerIndicators()
                         lifecycleScope.launch { setupChallenge(challengeIndex) }
                     }
                 }
@@ -154,6 +182,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             matchPlayers.viewsId.add(playerIndicator.id)
             binding.playerIndicators.addView(playerIndicator)
         }
+        binding.playerIndicators.visibility = VISIBLE
     }
 
     private suspend fun setupChallenge(challengeIndex: Int) {
@@ -163,8 +192,11 @@ class MatchOngoingActivity: AppCompatActivity() {
         fadeHints()
         buildChallengeFields(challengeIndex)
 
-        // Tell the server you're ready to countdown
+        delay(1000)
+        viewModel.notifyReadinessToInput()
 
+        binding.divider.visibility = VISIBLE
+        binding.animatedProgressBar.visibility = VISIBLE
         binding.playerIndicators.visibility = VISIBLE
         binding.mainContent.visibility = VISIBLE
     }
@@ -208,7 +240,8 @@ class MatchOngoingActivity: AppCompatActivity() {
                     setHorizontallyScrolling(false)
                     setBackgroundColor(Color.TRANSPARENT)
                     minHeight = 48.fromDpToPx()
-                    setTypeface(ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine), Typeface.BOLD)
+                    setTextAppearance(R.style.BoldEditTextStyle)
+//                    setTypeface(ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine), Typeface.BOLD)
                     setTextColor(resources.getColor(R.color.lyIndigo, theme))
                 }
 
@@ -272,7 +305,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             }
 
             if (idx == lyrics.size - 1) {
-                val openingQuotes = TextView(this).apply {
+                val closingQuotes = TextView(this).apply {
                     id = View.generateViewId()
                     typeface = ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine)
                     setTypeface(this.typeface, Typeface.BOLD)
@@ -287,19 +320,21 @@ class MatchOngoingActivity: AppCompatActivity() {
                     layoutParams = FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.WRAP_CONTENT,
                         20.fromDpToPx()
-                    )
+                    ).apply {
+                        gravity = Gravity.TOP or Gravity.END
+                    }
                 }
 
-                verseContainer.addView(openingQuotes)
+                verseContainer.addView(closingQuotes)
 
                 subsequentVerse.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
                     override fun onGlobalLayout() {
                         subsequentVerse.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
-                        val params = openingQuotes.layoutParams as FrameLayout.LayoutParams
-                        params.leftMargin = subsequentVerse.right - openingQuotes.width + 6.fromDpToPx()
+                        val params = closingQuotes.layoutParams as FrameLayout.LayoutParams
+                        params.rightMargin = verseContainer.width - subsequentVerse.right + 8.fromDpToPx()
                         params.topMargin = subsequentVerse.top - 8.fromDpToPx()
-                        openingQuotes.layoutParams = params
+                        closingQuotes.layoutParams = params
                     }
                 })
             }
@@ -310,11 +345,19 @@ class MatchOngoingActivity: AppCompatActivity() {
     }
 
     private fun fadeHints() {
-        binding.challengeHint.animate()
-            .alpha(0f)
-            .setDuration(350)
-            .start()
         binding.header.animate()
+            .alpha(0f)
+            .setDuration(250)
+            .setListener(
+                object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        binding.header.text = "10"
+                    }
+                }
+            )
+            .start()
+
+        binding.challengeHint.animate()
             .alpha(0f)
             .setDuration(350)
             .start()

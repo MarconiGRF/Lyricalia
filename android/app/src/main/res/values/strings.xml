@@ -16,7 +16,7 @@
     <string name="okay_confirm">Tudo bem</string>
     <string name="later_dismiss">Mais tarde</string>
     <string name="loading_hint">Pensando sobre seu gosto musical...</string>
-    <string name="loading_hint_simpler">Pensando...</string>
+    <string name="loading_hint_simpler">PENSANDO...</string>
     <string name="new_match">Nova partida</string>
     <string name="song_limit">Limite de músicas:</string>
     <string name="song_limit_about">O limite de músicas não garante um número mínimo de músicas, pois os integrantes da partida podem não ter tantas músicas em comum.</string>
@@ -30,4 +30,5 @@
     <string name="error_match_cannot_join">Não foi possível entrar na sala :(</string>
     <string name="matchId">Nome da sala</string>
     <string name="hint_fill_lyrics">Complete a letra de...</string>
+    <string name="send">Enviar</string>
 </resources>

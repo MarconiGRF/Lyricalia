@@ -116,7 +116,6 @@ class MenuActivity : AppCompatActivity() {
     }
 
     private fun updateProgressBar(percentage: Float): Unit {
-
         animator = ValueAnimator.ofFloat(binding.animatedProgressBar.scaleX, percentage).apply {
             duration = 250
 
