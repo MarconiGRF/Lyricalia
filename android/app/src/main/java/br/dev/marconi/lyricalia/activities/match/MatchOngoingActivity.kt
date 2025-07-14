@@ -10,10 +10,8 @@ import android.graphics.drawable.LayerDrawable
 import android.inputmethodservice.InputMethodService
 import android.os.Bundle
 import android.text.InputType
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.StyleSpan
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
 import android.view.View.TEXT_ALIGNMENT_CENTER
@@ -23,8 +21,8 @@ import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -41,6 +39,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.transition.AutoTransition
 import androidx.transition.TransitionManager
 import br.dev.marconi.lyricalia.R
+import br.dev.marconi.lyricalia.activities.MatchPlayers
 import br.dev.marconi.lyricalia.databinding.ActivityMatchOngoingBinding
 import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.MatchMessages
@@ -54,6 +53,7 @@ import kotlin.Int
 class MatchOngoingActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchOngoingBinding
     private lateinit var viewModel: MatchOngoingViewModel
+    private lateinit var matchPlayers: MatchPlayers
 
     private var isGclefAnimated = false
 
@@ -62,8 +62,9 @@ class MatchOngoingActivity: AppCompatActivity() {
 
         val vmFactory = MatchOngoingViewModelFactory(applicationContext.filesDir, lifecycleScope)
         viewModel = ViewModelProvider(this, vmFactory)[MatchOngoingViewModel::class.java]
-        viewModel.matchId = intent.extras!!.getString(NavigationUtils.MATCH_ID_PARAMETER_ID)!!
-        viewModel.isHost = intent.extras!!.getBoolean(NavigationUtils.IS_HOST_PARAMETER_ID)
+        viewModel.matchId = intent.extras?.getString(NavigationUtils.MATCH_ID_PARAMETER_ID)!!
+        viewModel.isHost = intent.extras?.getBoolean(NavigationUtils.IS_HOST_PARAMETER_ID)!!
+        matchPlayers = intent.extras?.getParcelable(NavigationUtils.MATCH_PLAYERS_PARAMETER_ID, MatchPlayers::class.java)!!
 
         setupCommonUI()
 
@@ -128,11 +129,31 @@ class MatchOngoingActivity: AppCompatActivity() {
             .setListener(
                 object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
+                        buildPlayerIndicators()
                         lifecycleScope.launch { setupChallenge(challengeIndex) }
                     }
                 }
             )
             .start()
+    }
+
+    private fun buildPlayerIndicators() {
+        matchPlayers.players.forEachIndexed { idx, player ->
+            val playerIndicator = LayoutInflater.from(this@MatchOngoingActivity)
+                .inflate(R.layout.player_indicator_simple, binding.playerIndicators, false)
+            playerIndicator.id = View.generateViewId()
+
+            playerIndicator.findViewById<TextView>(R.id.playerGlyph).also {
+                it.setTextColor(matchPlayers.colors[idx][0])
+                it.text = player.name.first().uppercase().toString()
+            }
+            playerIndicator.findViewById<ImageView>(R.id.playerGlyphContainer).setColorFilter(
+                matchPlayers.colors[idx][1]
+            )
+
+            matchPlayers.viewsId.add(playerIndicator.id)
+            binding.playerIndicators.addView(playerIndicator)
+        }
     }
 
     private suspend fun setupChallenge(challengeIndex: Int) {
@@ -142,9 +163,10 @@ class MatchOngoingActivity: AppCompatActivity() {
         fadeHints()
         buildChallengeFields(challengeIndex)
 
-        // Setup player indicators on the bottom
-
         // Tell the server you're ready to countdown
+
+        binding.playerIndicators.visibility = VISIBLE
+        binding.mainContent.visibility = VISIBLE
     }
 
     private fun buildChallengeFields(challengeIndex: Int) {
@@ -152,7 +174,6 @@ class MatchOngoingActivity: AppCompatActivity() {
 
         var idx = 0
         while (idx < lyrics.size) {
-            // Create a FrameLayout container for each verse
             val verseContainer = FrameLayout(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -170,6 +191,7 @@ class MatchOngoingActivity: AppCompatActivity() {
                 subsequentVerse = TextView(this)
                 subsequentVerse.id = View.generateViewId()
                 subsequentVerse.text = lyrics[idx]
+                subsequentVerse.setTextColor(resources.getColor(R.color.lyDarkerGray, theme))
 
                 subsequentVerse.layoutParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.WRAP_CONTENT,
@@ -186,6 +208,8 @@ class MatchOngoingActivity: AppCompatActivity() {
                     setHorizontallyScrolling(false)
                     setBackgroundColor(Color.TRANSPARENT)
                     minHeight = 48.fromDpToPx()
+                    setTypeface(ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine), Typeface.BOLD)
+                    setTextColor(resources.getColor(R.color.lyIndigo, theme))
                 }
 
                 val layerDrawable = LayerDrawable(arrayOf(
@@ -202,26 +226,24 @@ class MatchOngoingActivity: AppCompatActivity() {
                     FrameLayout.LayoutParams.WRAP_CONTENT,
                     Gravity.CENTER
                 )
+                layoutParams.bottomMargin = 10.fromDpToPx()
                 subsequentVerse.layoutParams = layoutParams
             }
 
             subsequentVerse.typeface = ResourcesCompat.getFont(this, R.font.domine)
-            subsequentVerse.setTextColor(resources.getColor(R.color.lyDarkerGray, theme))
             subsequentVerse.textSize = 20f
             subsequentVerse.textAlignment = TEXT_ALIGNMENT_CENTER
             subsequentVerse.elevation = 10f
             subsequentVerse.setPadding(10.fromDpToPx(), 0, 10.fromDpToPx(), 5.fromDpToPx())
 
-            // Add the verse to the container
             verseContainer.addView(subsequentVerse)
 
-            // Add opening quotes for the first verse
             if (idx == 0) {
                 val openingQuotes = TextView(this).apply {
                     id = View.generateViewId()
                     typeface = ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine)
                     setTypeface(this.typeface, Typeface.BOLD)
-                    textSize = 42f
+                    textSize = 38f
                     textAlignment = TEXT_ALIGNMENT_CENTER
                     setTextColor(resources.getColor(R.color.lyDarkerGray, theme))
                     text = "“"
@@ -243,7 +265,7 @@ class MatchOngoingActivity: AppCompatActivity() {
 
                         val params = openingQuotes.layoutParams as FrameLayout.LayoutParams
                         params.leftMargin = subsequentVerse.left - 8.fromDpToPx()
-                        params.topMargin = subsequentVerse.top - 12.fromDpToPx()
+                        params.topMargin = subsequentVerse.top - 8.fromDpToPx()
                         openingQuotes.layoutParams = params
                     }
                 })
@@ -254,7 +276,7 @@ class MatchOngoingActivity: AppCompatActivity() {
                     id = View.generateViewId()
                     typeface = ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine)
                     setTypeface(this.typeface, Typeface.BOLD)
-                    textSize = 42f
+                    textSize = 38f
                     textAlignment = TEXT_ALIGNMENT_CENTER
                     setTextColor(resources.getColor(R.color.lyDarkerGray, theme))
                     text = "”"
@@ -275,8 +297,8 @@ class MatchOngoingActivity: AppCompatActivity() {
                         subsequentVerse.viewTreeObserver.removeOnGlobalLayoutListener(this)
 
                         val params = openingQuotes.layoutParams as FrameLayout.LayoutParams
-                        params.leftMargin = subsequentVerse.right - openingQuotes.width + 4.fromDpToPx()
-                        params.topMargin = subsequentVerse.top - 12.fromDpToPx()
+                        params.leftMargin = subsequentVerse.right - openingQuotes.width + 6.fromDpToPx()
+                        params.topMargin = subsequentVerse.top - 8.fromDpToPx()
                         openingQuotes.layoutParams = params
                     }
                 })
@@ -285,9 +307,6 @@ class MatchOngoingActivity: AppCompatActivity() {
             binding.mainContent.addView(verseContainer)
             idx++
         }
-
-        // Do this to the last, append all fields and texts first
-        binding.mainContent.visibility = VISIBLE
     }
 
     private fun fadeHints() {

@@ -22,10 +22,12 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
+import br.dev.marconi.lyricalia.activities.MatchPlayers
 import br.dev.marconi.lyricalia.databinding.ActivityMatchWaitingBinding
 import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.PlayerMessages
 import br.dev.marconi.lyricalia.repositories.match.PlayerInfo
+import br.dev.marconi.lyricalia.repositories.match.toNonSer
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.viewModels.match.MatchWaitingViewModel
 import br.dev.marconi.lyricalia.viewModels.match.MatchWaitingViewModelFactory
@@ -40,6 +42,7 @@ class MatchWaitingActivity: AppCompatActivity() {
     private var players = mutableMapOf<String, Int>()
     private lateinit var otherPlayersLayout: LinearLayout
     private lateinit var playerColors: Array<Pair<Int, Int>>
+    private var matchPlayers = MatchPlayers()
 
     override fun onStart() {
         super.onStart()
@@ -229,7 +232,7 @@ class MatchWaitingActivity: AppCompatActivity() {
         delay(1000)
 
         viewModel
-        NavigationUtils.navigateToMatchOngoing(this, viewModel.matchId, viewModel.isHost)
+        NavigationUtils.navigateToMatchOngoing(this, viewModel.matchId, viewModel.isHost, matchPlayers)
     }
 
     private fun addPlayerOnView(playerInfo: PlayerInfo) {
@@ -239,18 +242,20 @@ class MatchWaitingActivity: AppCompatActivity() {
         playerIndicatorInstance.id = View.generateViewId()
         players.put(playerInfo.id, playerIndicatorInstance.id)
 
-        playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
-            .setColorFilter(playerColors[viewModel.currentColor].second)
-        playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
-            .setOnClickListener {
-                Toast.makeText(this, playerInfo.name, Toast.LENGTH_SHORT).show()
-            }
-        playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
-            .performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer).setOnClickListener {
+            Toast.makeText(this, playerInfo.name, Toast.LENGTH_SHORT).show()
+        }
+        playerIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer).setColorFilter(playerColors[viewModel.currentColor].second)
         playerIndicatorInstance.findViewById<TextView>(R.id.playerGlyph).also {
             it.setTextColor(playerColors[viewModel.currentColor].first)
-            it.text = playerInfo.name[0].toString()
+            it.text = playerInfo.name[0].uppercase().toString()
         }
+
+        matchPlayers.players.add(playerInfo.toNonSer())
+        matchPlayers.colors.add(
+            arrayListOf(playerColors[viewModel.currentColor].first, playerColors[viewModel.currentColor].second)
+        )
+
         viewModel.currentColor = (viewModel.currentColor + 1) % playerColors.size
 
         playerIndicatorInstance.translationY = 2000f

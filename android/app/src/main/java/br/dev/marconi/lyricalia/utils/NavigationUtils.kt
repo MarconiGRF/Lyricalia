@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import br.dev.marconi.lyricalia.activities.MainActivity
+import br.dev.marconi.lyricalia.activities.MatchPlayers
 import br.dev.marconi.lyricalia.activities.MenuActivity
 import br.dev.marconi.lyricalia.activities.SpotifyLinkActivity
 import br.dev.marconi.lyricalia.activities.match.MatchCreateActivity
@@ -43,21 +44,23 @@ class NavigationUtils {
                 isHost)
         }
 
-        fun navigateToMatchOngoing(packageContext: Context, matchId: String, isHost: Boolean) {
+        fun navigateToMatchOngoing(packageContext: Context, matchId: String, isHost: Boolean, matchPlayers: MatchPlayers) =
             navigateToActivity(
                 packageContext,
                 MatchOngoingActivity::class.java,
                 canGoBack = false,
                 matchId,
-                isHost)
-        }
+                isHost,
+                matchPlayers
+            )
 
         private fun navigateToActivity(
             packageContext: Context,
             cls: Class<out Activity>,
             canGoBack: Boolean,
             matchIdExtra: String? = null,
-            isHostExtra: Boolean? = false
+            isHostExtra: Boolean? = false,
+            matchPlayersExtra: MatchPlayers? = null
         ) {
             val intent = Intent(packageContext, cls)
             if (!canGoBack) {
@@ -70,11 +73,15 @@ class NavigationUtils {
             if (isHostExtra != null) {
                 intent.putExtra(IS_HOST_PARAMETER_ID, isHostExtra)
             }
+            if (matchPlayersExtra != null) {
+                intent.putExtra(MATCH_PLAYERS_PARAMETER_ID, matchPlayersExtra)
+            }
 
             packageContext.startActivity(intent)
         }
 
         const val IS_HOST_PARAMETER_ID = "isHost"
         const val MATCH_ID_PARAMETER_ID = "matchId"
+        const val MATCH_PLAYERS_PARAMETER_ID = "matchPlayers"
     }
 }
