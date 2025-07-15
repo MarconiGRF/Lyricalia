@@ -87,6 +87,9 @@ struct MatchController: RouteCollection {
                 case PlayerMessages.INPUT_READY.rawValue:
                     print("  -> Player ready for input")
                     Task { await match.ackInput(playerId: message[2]) }
+                case PlayerMessages.INPUT_READY.rawValue:
+                    print("  -> Player ready for input")
+                    Task { await match.ackSubmission(playerId: message[2], submission: message[3]) }
 
                 default:
                     throw LyricaliaAPIError.invalidCommand

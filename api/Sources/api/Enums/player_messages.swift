@@ -5,6 +5,7 @@ enum PlayerMessages: String {
     case READY = "ready"
     case CHALLENGE_READY = "challenge_ready"
     case INPUT_READY = "input_ready"
+    case SUBMISSION = "submission"
 
     // RECEIVABLES
     case JOINED = "player$joined$"

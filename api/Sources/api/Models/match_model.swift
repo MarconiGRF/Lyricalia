@@ -3,18 +3,13 @@ import Vapor
 import Fluent
 import SQLKit
 
-struct PlayerSubmission {
-    var hasSubmitted: Bool = false
-    var submission: String = ""
-}
-
 class PlayingUser: @unchecked Sendable {
     let user: User
 
     var isReady: Bool
     var ws: WebSocket
     var score: Int64 = 0
-    var submission: [PlayerSubmission] = []
+    var submissions: [ [String] ] = []
 
     init(_ user: User, _ ws: WebSocket) {
         self.user = user
@@ -258,7 +253,7 @@ class Match: @unchecked Sendable {
     func ackInput(playerId: String) async {
         do {
             let player = players.first { $0.user.id!.uuidString == playerId }
-            if (player == nil) { throw LyricaliaAPIError.inconsistency("No player found to be ready for challenge with id \(playerId)") }
+            if (player == nil) { throw LyricaliaAPIError.inconsistency("No player found to be ready for input with id \(playerId)") }
             player!.isReady = true
 
             if (allReady) {
@@ -269,7 +264,28 @@ class Match: @unchecked Sendable {
                 players.forEach { $0.isReady = false }
             }
         } catch {
-            print("    !!! Failed to ack player readinesss for challenge -> \(error)")
+            print("    !!! Failed to ack player readinesss for input -> \(error)")
+        }
+    }
+
+    func ackSubmission(playerId: String, submission: String) async {
+        do {
+            let player = players.first { $0.user.id!.uuidString == playerId }
+            if (player == nil) { throw LyricaliaAPIError.inconsistency("No player found to receive submission with id \(playerId)") }
+            player!.isReady = true
+            player!.submissions.append(submission.components(separatedBy: "\n"))
+
+            if (allReady) {
+                print("    -> All players submitted their answers!")
+
+                self.countdown = 0
+                calculateScores()
+                sendPodium()
+
+                players.forEach { $0.isReady = false }
+            }
+        } catch {
+            print("    !!! Failed to ack player submission -> \(error)")
         }
     }
 
@@ -280,6 +296,50 @@ class Match: @unchecked Sendable {
 
 
 
+    private func sendPodium() {
+        // Condense and send podium
+    }
+
+    private func calculateScores() {
+        do {
+            var finalScore = 0
+            let totalSizeSimilarityPoints = 1000
+            let totalContentSimilarityPoints = 4000
+
+            // on the current challenge index, do:
+            let lyricsSection = lyricalChallenges[chosenSongs[currentChallengeIndex!].spotifyId]!
+            for (verseIndex, verse) in lyricsSection.enumerated() {
+                if !verse.starts(with: "lyChal_") { continue }
+
+                let originalVerse = lyricsOriginalVerses[
+                    chosenSongs[
+                        currentChallengeIndex!
+                    ].spotifyId
+                ]![verseIndex]
+
+                for player in players {
+                    let playerSectionSubmission = player.submissions[currentChallengeIndex!]
+
+                    // Calculate points by size similarity
+                    // The farthest the player verse submission size is from the original size, the more points player loses
+                    // This will return a 0-1 percentage, thus * 1000 is applied
+                    let playerVerseSize = Double(playerSectionSubmission[verseIndex].count)
+                    let originalVerseSize = Double(originalVerse.count)
+
+                    let sizeDiscountPoints = (playerVerseSize / originalVerseSize) * 1000
+                    finalScore += totalSizeSimilarityPoints - Int(sizeDiscountPoints)
+
+                    // Calculate points by content similarity
+                    // The farthest the distance to make the strings equal, the more points player loses
+                    /// This will return 0-N number, thus only * 100 is applied (also due to higher weight on final points)
+                    let contentSimilarityDiscountPoints = LevenshteinDistance.calculate(
+                        originalVerse, playerSectionSubmission[verseIndex]
+                    ) * 100
+                    finalScore += totalContentSimilarityPoints - contentSimilarityDiscountPoints
+                }
+            }
+        }
+    }
 
     private func sendChallenges() async throws {
         for player in players {
