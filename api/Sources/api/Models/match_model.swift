@@ -8,13 +8,21 @@ class PlayingUser: @unchecked Sendable {
 
     var isReady: Bool
     var ws: WebSocket
-    var score: Int64 = 0
+    var score: Int = 0 {
+        didSet {
+            if (score < 0) { score = 0 }
+        }
+    }
     var submissions: [ [String] ] = []
 
     init(_ user: User, _ ws: WebSocket) {
         self.user = user
         self.ws = ws
         self.isReady = false
+    }
+
+    func toPodium() -> PlayerPodium {
+        .init(id: user.id!, score: score)
     }
 }
 
@@ -28,21 +36,24 @@ class Match: @unchecked Sendable {
     var chosenSongs: [Song] = []
     var lyrics: [String : Lyric] = [:]
 
-    var totalTime = 5
+    var totalTime = 15
     var countdown: Int = -1 {
         didSet {
-            if (countdown >= 0) {
-                for player in players {
-                    Task {
+            if (countdown > 0) {
+                Task {
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                    print("    -> Countdown: \(countdown)")
+
+                    for player in players {
                         try await player.ws.send(MatchMessages.COUNTDOWN.rawValue + "\(totalTime)/\(countdown)")
                     }
-                }
-                Task {
-                    // It's a countdown, wait 1s, then decrease...
-                    try await Task.sleep(nanoseconds: 1_000_000_000)
-                    print("Counting down -1, currently at \(countdown)")
                     countdown -= 1
                 }
+            } else if (countdown == 0) {
+                print("    -> \(countdown)? Time's up! Calculating Scores")
+                calculateScores()
+
+                Task { try await sendPodium() }
             }
         }
     }
@@ -273,15 +284,14 @@ class Match: @unchecked Sendable {
             let player = players.first { $0.user.id!.uuidString == playerId }
             if (player == nil) { throw LyricaliaAPIError.inconsistency("No player found to receive submission with id \(playerId)") }
             player!.isReady = true
-            player!.submissions.append(submission.components(separatedBy: "\n"))
+
+            let playerChallengeSubmission = try JSONDecoder().decode([String].self, from: submission.data(using: .utf8)!)
+            player!.submissions.append(playerChallengeSubmission)
 
             if (allReady) {
                 print("    -> All players submitted their answers!")
 
                 self.countdown = 0
-                calculateScores()
-                sendPodium()
-
                 players.forEach { $0.isReady = false }
             }
         } catch {
@@ -296,15 +306,34 @@ class Match: @unchecked Sendable {
 
 
 
-    private func sendPodium() {
-        // Condense and send podium
+
+
+
+
+
+
+
+    private func sendPodium() async throws {
+        let playerPodium = self.players
+            .map { $0.toPodium() }
+            .sorted{ $0.score > $1.score }
+
+        let encoder = JSONEncoder()
+        // encoder.outputFormatting = .withoutEscapingSlashes
+        let jsonifiedPodium =  String(data: try encoder.encode(playerPodium), encoding: .utf8)!
+
+        for player in players {
+            Task {
+                try await Task.sleep(nanoseconds: 1_000_000_000)
+                try await player.ws.send(MatchMessages.PODIUM.rawValue + jsonifiedPodium)
+            }
+        }
     }
 
     private func calculateScores() {
         do {
-            var finalScore = 0
             let totalSizeSimilarityPoints = 1000
-            let totalContentSimilarityPoints = 4000
+            let totalContentSimilarityPoints = 3000
 
             // on the current challenge index, do:
             let lyricsSection = lyricalChallenges[chosenSongs[currentChallengeIndex!].spotifyId]!
@@ -324,10 +353,21 @@ class Match: @unchecked Sendable {
                     // The farthest the player verse submission size is from the original size, the more points player loses
                     // This will return a 0-1 percentage, thus * 1000 is applied
                     let playerVerseSize = Double(playerSectionSubmission[verseIndex].count)
+                    if (playerVerseSize == 0) {
+                        player.score += 0
+                        continue
+                    }
                     let originalVerseSize = Double(originalVerse.count)
 
-                    let sizeDiscountPoints = (playerVerseSize / originalVerseSize) * 1000
-                    finalScore += totalSizeSimilarityPoints - Int(sizeDiscountPoints)
+                    let submissionSizeDifference = playerVerseSize > originalVerseSize
+                        ? Double(playerVerseSize - originalVerseSize)
+                        : Double(originalVerseSize - playerVerseSize)
+
+                    let sizeDiscountPoints = Int((submissionSizeDifference / originalVerseSize) * 1000)
+                    // Avoid negative scores
+                    if (sizeDiscountPoints < totalSizeSimilarityPoints) {
+                        player.score += totalSizeSimilarityPoints - sizeDiscountPoints
+                    }
 
                     // Calculate points by content similarity
                     // The farthest the distance to make the strings equal, the more points player loses
@@ -335,7 +375,10 @@ class Match: @unchecked Sendable {
                     let contentSimilarityDiscountPoints = LevenshteinDistance.calculate(
                         originalVerse, playerSectionSubmission[verseIndex]
                     ) * 100
-                    finalScore += totalContentSimilarityPoints - contentSimilarityDiscountPoints
+                    // Avoid negative scores
+                    if (contentSimilarityDiscountPoints < totalContentSimilarityPoints) {
+                        player.score += totalContentSimilarityPoints - contentSimilarityDiscountPoints
+                    }
                 }
             }
         }
@@ -382,13 +425,13 @@ class Match: @unchecked Sendable {
 
             // Delete verses!
             switch ExcerptSection.random() {
-                case ExcerptSection.BEGGINING:
-                    var idx = 0
-                    while (idx < deletionAmount) {
-                        excerptVerses[idx] = "lyChal_\(excerptVerses[idx].count)"
-                        idx += 1
-                    }
-                    lyricalChallenges[spotifyId] = excerptVerses
+                // case ExcerptSection.BEGGINING:
+                //     var idx = 0
+                //     while (idx < deletionAmount) {
+                //         excerptVerses[idx] = "lyChal_\(excerptVerses[idx].count)"
+                //         idx += 1
+                //     }
+                //     lyricalChallenges[spotifyId] = excerptVerses
 
                 case ExcerptSection.MIDDLE:
                     var idx = deletionAmount - 1
@@ -405,6 +448,8 @@ class Match: @unchecked Sendable {
                         idx -= 1
                     }
                     lyricalChallenges[spotifyId] = excerptVerses
+
+                default: print("???")
             }
         }
     }

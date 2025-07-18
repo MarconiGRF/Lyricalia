@@ -25,6 +25,8 @@ class MatchOngoingViewModel(
     var matchId: String = ""
     var isHost: Boolean = false
     var challengeSet: MatchChallengeSet? = null
+    var currentChallengeIndex: Int = -1
+    var hasSubmittedAnswer = false
 
     private val baseUrl: String
     private val currentUser: User
@@ -59,6 +61,28 @@ class MatchOngoingViewModel(
         } catch (ex: Exception) {
             throw Exception("Failed to join match as player: ${ex.message}")
         }
+    }
+
+    fun submitChallengeAnswer() {
+        var answerArray = challengeSet?.challenges[
+            challengeSet?.songs[
+                currentChallengeIndex
+            ]?.spotifyId
+        ]
+        answerArray?.forEachIndexed { idx, _ ->
+            if (answerArray[idx].startsWith("lyChal_")) {
+                answerArray[idx] = ""
+            }
+        }
+
+        val submissionMessage = PlayerMessages.SUBMISSION(
+            currentUser.id!!,
+            Gson().toJson(answerArray)
+        )
+
+        hasSubmittedAnswer = true
+        ws.send(submissionMessage)
+        Log.d("IF1001_P3_LYRICALIA", "Sent submission to server")
     }
 
     fun notifyReadinessToChallenge() {

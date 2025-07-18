@@ -13,6 +13,7 @@ class PlayerMessages {
         fun READY(userId: String) = "player\$ready$$userId"
         fun CHALLENGE_READY(userId: String) = "player\$challenge_ready$$userId"
         fun INPUT_READY(userId: String) = "player\$input_ready$$userId"
+        fun SUBMISSION(userId: String, jsonifiedSubmission: String) = "player\$submission$$userId$$jsonifiedSubmission"
 
         // RECEIVABLES
         fun JOINED(userId: String) = "player\$joined$$userId"

@@ -15,6 +15,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.GONE
+import android.view.View.INVISIBLE
 import android.view.View.TEXT_ALIGNMENT_CENTER
 import android.view.View.VISIBLE
 import android.view.ViewTreeObserver
@@ -29,13 +30,14 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.marginBottom
+import androidx.core.view.setPadding
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.AutoTransition
@@ -45,9 +47,13 @@ import br.dev.marconi.lyricalia.activities.MatchPlayers
 import br.dev.marconi.lyricalia.databinding.ActivityMatchOngoingBinding
 import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.MatchMessages
+import br.dev.marconi.lyricalia.enums.PlayerMessages
+import br.dev.marconi.lyricalia.repositories.match.PlayerPodium
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.viewModels.match.MatchOngoingViewModel
 import br.dev.marconi.lyricalia.viewModels.match.MatchOngoingViewModelFactory
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.Int
@@ -59,6 +65,7 @@ class MatchOngoingActivity: AppCompatActivity() {
 
     private var isGclefAnimated = false
     private var animator: ValueAnimator? = null
+    private var challengeInputIds = mutableListOf<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,6 +102,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             MatchMessages.RECEIVABLE_PROCESSING -> updateLoadingHint("LETRANDO...")
             MatchMessages.RECEIVABLE_CHALLENGE -> processChallengeActionable(messageParts)
             MatchMessages.RECEIVABLE_COUNTDOWN -> processCountdown(messageParts[2])
+            MatchMessages.RECEIVABLE_PODIUM -> showPodium(messageParts[2])
             MatchMessages.RECEIVABLE_READY -> {
                 updateLoadingHint("VAMOS LÁ!")
                 lifecycleScope.launch {
@@ -108,13 +116,62 @@ class MatchOngoingActivity: AppCompatActivity() {
         }
     }
 
+    private fun showPodium(jsonPodium: String) {
+        binding.header.animate().alpha(0f).setDuration(350)
+            .setListener(
+                object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
+                    binding.header.text = "Pódio"
+                    binding.header.setTextColor(resources.getColor(R.color.lyGray, theme))
+                    binding.header.animate().alpha(1f).setDuration(350).setListener(null).start()
+                }}
+            ).start()
+
+        binding.mainContent.animate().alpha(0f).setDuration(350)
+            .setListener(
+                object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
+                    binding.mainContent.visibility = INVISIBLE
+                    binding.mainContent.alpha = 1f
+                }}
+            ).start()
+        binding.submitButton.animate().alpha(0f).setDuration(350)
+            .setListener(
+                object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
+                    binding.submitButton.visibility = INVISIBLE
+                    binding.submitButton.alpha = 1f
+                }}
+            ).start()
+        binding.currentChallengeHint.animate().alpha(0f).setDuration(350)
+            .setListener(
+                object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
+                    binding.currentChallengeHint.visibility = INVISIBLE
+                    binding.currentChallengeHint.alpha = 1f
+                }}
+            ).start()
+
+        binding.animatedProgressBar.alpha = 0f
+
+        val podium = Gson().fromJson<List<PlayerPodium>>(jsonPodium, object : TypeToken<List<PlayerPodium>>() {}.type)
+
+        binding.podiumLayout.addView(
+            TextView(this@MatchOngoingActivity).apply {
+                text = jsonPodium
+                layoutParams = ConstraintLayout.LayoutParams(
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                    ConstraintLayout.LayoutParams.WRAP_CONTENT
+                )
+            }
+        )
+        binding.podiumLayout.visibility = VISIBLE
+    }
+
     private fun processChallengeActionable(messageParts: List<String>) {
         val challengeInfo = messageParts[2].toIntOrNull()
         when (challengeInfo) {
             null ->  toastUnknownMessage("null challenge actionable")
             in 0 .. 100 -> {
                 buildPlayerIndicators()
-                showChallengeHint(challengeInfo)
+                viewModel.currentChallengeIndex = challengeInfo
+                showChallengeHint()
             }
             else -> toastUnknownMessage("2 " + messageParts.joinToString("$"))
         }
@@ -125,17 +182,22 @@ class MatchOngoingActivity: AppCompatActivity() {
         if (countdown.size <= 1) { toastUnknownMessage("invalid countdown: "); return }
 
         val currentTime = countdown[1].toFloat()
-        if (currentTime == 0f) {
-            processTimesUp()
-        } else {
-            val percentage = currentTime / countdown[0].toFloat()
-            lifecycleScope.launch { updateProgressBar(percentage) }
 
-            binding.header.alpha = 1f
-            binding.header.text = countdown[1]
+        val percentage = currentTime / countdown[0].toFloat()
+        lifecycleScope.launch { updateProgressBar(percentage) }
 
+        binding.header.alpha = 1f
+        binding.header.text = countdown[1]
+
+        if (!viewModel.hasSubmittedAnswer) {
+            binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGreen, theme))
+            binding.submitButton.setTextColor(resources.getColor(R.color.Black, theme))
             binding.submitButton.isClickable = true
             binding.submitButton.visibility = VISIBLE
+        }
+
+        if (currentTime == 0f) {
+            processTimesUp()
         }
     }
 
@@ -145,10 +207,23 @@ class MatchOngoingActivity: AppCompatActivity() {
         binding.header.text = "TEMPO!"
         binding.header.setTextColor(resources.getColor(R.color.lyRed, theme))
 
-        // TODO: Move this to Submit method
+        if (!viewModel.hasSubmittedAnswer) {
+            submitAnswer()
+        }
+    }
+
+    private fun submitAnswer() {
+        challengeInputIds.forEach {
+            val challengeInput = binding.mainContent.findViewById<EditText>(it)
+            challengeInput.clearFocus()
+            challengeInput.isEnabled = false
+        }
+
         binding.submitButton.isClickable = false
         binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGray, theme))
         binding.submitButton.setTextColor(resources.getColor(R.color.lyWhite, theme))
+
+        viewModel.submitChallengeAnswer()
     }
 
     private fun updateProgressBar(percentage: Float) {
@@ -163,16 +238,14 @@ class MatchOngoingActivity: AppCompatActivity() {
     }
 
     @SuppressLint("SetTextI18n")
-    private fun showChallengeHint(challengeIndex: Int) {
-        binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGray, theme))
-        binding.submitButton.setTextColor(resources.getColor(R.color.lyWhite, theme))
+    private fun showChallengeHint() {
         binding.submitButton.visibility = GONE
         binding.submitButton.isClickable = false
 
-        binding.songNameHint.text = viewModel.challengeSet!!.songs[challengeIndex].name
-        binding.artistHint.text = viewModel.challengeSet!!.songs[challengeIndex].artist
+        binding.songNameHint.text = viewModel.challengeSet!!.songs[viewModel.currentChallengeIndex].name
+        binding.artistHint.text = viewModel.challengeSet!!.songs[viewModel.currentChallengeIndex].artist
 
-        binding.challengeIndex.text = "${challengeIndex + 1}/${viewModel.challengeSet!!.songs.size}"
+        binding.challengeIndex.text = "${viewModel.currentChallengeIndex + 1}/${viewModel.challengeSet!!.songs.size}"
         binding.challengeIndex.visibility = VISIBLE
 
         binding.currentChallengeHint.alpha = 0f
@@ -183,7 +256,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             .setListener(
                 object : AnimatorListenerAdapter() {
                     override fun onAnimationEnd(animation: Animator) {
-                        lifecycleScope.launch { setupChallenge(challengeIndex) }
+                        lifecycleScope.launch { setupChallenge() }
                     }
                 }
             )
@@ -210,12 +283,12 @@ class MatchOngoingActivity: AppCompatActivity() {
         binding.playerIndicators.visibility = VISIBLE
     }
 
-    private suspend fun setupChallenge(challengeIndex: Int) {
+    private suspend fun setupChallenge() {
         //TODO: Check if this is really necessary or section are too slow between them due to animations
         delay(3500)
 
         fadeHints()
-        buildChallengeFields(challengeIndex)
+        buildChallengeFields()
 
         delay(1000)
         viewModel.notifyReadinessToInput()
@@ -224,13 +297,19 @@ class MatchOngoingActivity: AppCompatActivity() {
         binding.animatedProgressBar.visibility = VISIBLE
         binding.playerIndicators.visibility = VISIBLE
         binding.mainContent.visibility = VISIBLE
+        binding.submitButton.setOnClickListener { submitAnswer()  }
     }
 
-    private fun buildChallengeFields(challengeIndex: Int) {
-        val lyrics = viewModel.challengeSet!!.challenges[viewModel.challengeSet!!.songs[challengeIndex].spotifyId]!!
+    private fun buildChallengeFields() {
+        var lyrics = viewModel
+            .challengeSet?.challenges[
+                viewModel
+                    .challengeSet?.songs[
+                        viewModel.currentChallengeIndex
+                    ]?.spotifyId
+            ]
 
-        var idx = 0
-        while (idx < lyrics.size) {
+        lyrics?.forEachIndexed { idx, _ ->
             val verseContainer = FrameLayout(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -258,6 +337,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             } else {
                 subsequentVerse = EditText(this).apply {
                     id = View.generateViewId()
+                    challengeInputIds.add(id)
                     maxLines = Int.MAX_VALUE
 
                     setSingleLine(false)
@@ -266,8 +346,22 @@ class MatchOngoingActivity: AppCompatActivity() {
                     setBackgroundColor(Color.TRANSPARENT)
                     minHeight = 48.fromDpToPx()
                     setTextAppearance(R.style.BoldEditTextStyle)
-//                    setTypeface(ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine), Typeface.BOLD)
+                    setTypeface(ResourcesCompat.getFont(this@MatchOngoingActivity, R.font.domine), Typeface.BOLD)
                     setTextColor(resources.getColor(R.color.lyIndigo, theme))
+                    onFocusChangeListener = View.OnFocusChangeListener({ _, hasFocus ->
+                        if (!hasFocus) {
+                            viewModel
+                                .challengeSet!!
+                                .challenges[
+                                viewModel
+                                    .challengeSet!!
+                                    .songs[
+                                    viewModel.currentChallengeIndex
+                                ].spotifyId
+                            ]!![idx] = this.text.toString()
+                        }
+                    })
+                    setPadding(0, 0, 0, 4.fromDpToPx())
                 }
 
                 val layerDrawable = LayerDrawable(arrayOf(
@@ -365,7 +459,6 @@ class MatchOngoingActivity: AppCompatActivity() {
             }
 
             binding.mainContent.addView(verseContainer)
-            idx++
         }
     }
 

@@ -1,5 +1,5 @@
 enum ExcerptSection: CaseIterable {
-    case BEGGINING
+    // case BEGGINING
     case MIDDLE
     case ENDING
 

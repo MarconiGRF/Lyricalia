@@ -6,12 +6,7 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PlayerInfo (
+data class PlayerPodium (
     val id: String,
-    val name: String,
-    val username: String
+    val score: Int
 )
-
-fun PlayerInfo.toNonSer(): NonSerPlayerInfo {
-    return NonSerPlayerInfo(this.id, this.name, this.username)
-}
