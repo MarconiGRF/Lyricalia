@@ -288,6 +288,10 @@ class Match: @unchecked Sendable {
             let playerChallengeSubmission = try JSONDecoder().decode([String].self, from: submission.data(using: .utf8)!)
             player!.submissions.append(playerChallengeSubmission)
 
+            for player in players {
+                try await player.ws.send(MatchMessages.SUBMITTED.rawValue + playerId)
+            }
+
             if (allReady) {
                 print("    -> All players submitted their answers!")
 

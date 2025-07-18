@@ -103,6 +103,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             MatchMessages.RECEIVABLE_CHALLENGE -> processChallengeActionable(messageParts)
             MatchMessages.RECEIVABLE_COUNTDOWN -> processCountdown(messageParts[2])
             MatchMessages.RECEIVABLE_PODIUM -> showPodium(messageParts[2])
+            MatchMessages.RECEIVABLE_SUBMITTED -> processSubmitted(messageParts[2])
             MatchMessages.RECEIVABLE_READY -> {
                 updateLoadingHint("VAMOS LÁ!")
                 lifecycleScope.launch {
@@ -113,6 +114,37 @@ class MatchOngoingActivity: AppCompatActivity() {
                 }
             }
             else -> { toastUnknownMessage("1 " + messageParts.joinToString("$")) }
+        }
+    }
+
+    private fun processSubmitted(playerId: String) {
+        val donePlayerIdx = matchPlayers.players.map{ it.id }.indexOf(playerId)
+        if (donePlayerIdx == -1) { toastUnknownMessage("Player submitted but not found on indicators") }
+
+        val playerIndicatorInstance = binding.playerIndicators.findViewById<View>(matchPlayers.viewsId[donePlayerIdx])
+        val layoutParams = playerIndicatorInstance.layoutParams as LinearLayout.LayoutParams
+
+        ValueAnimator.ofInt(0, 40.fromDpToPx()).apply {
+            duration = 100
+            addUpdateListener { animator ->
+                layoutParams.bottomMargin = animator.animatedValue as Int
+                playerIndicatorInstance.layoutParams = layoutParams
+            }
+            start()
+        }
+        playerIndicatorInstance.findViewById<ImageView>(R.id.playerCheckmark).alpha = 1f
+    }
+
+    private fun processChallengeActionable(messageParts: List<String>) {
+        val challengeInfo = messageParts[2].toIntOrNull()
+        when (challengeInfo) {
+            null ->  toastUnknownMessage("null challenge actionable")
+            in 0 .. 100 -> {
+                buildPlayerIndicators()
+                viewModel.currentChallengeIndex = challengeInfo
+                showChallengeHint()
+            }
+            else -> toastUnknownMessage("2 " + messageParts.joinToString("$"))
         }
     }
 
@@ -162,19 +194,6 @@ class MatchOngoingActivity: AppCompatActivity() {
             }
         )
         binding.podiumLayout.visibility = VISIBLE
-    }
-
-    private fun processChallengeActionable(messageParts: List<String>) {
-        val challengeInfo = messageParts[2].toIntOrNull()
-        when (challengeInfo) {
-            null ->  toastUnknownMessage("null challenge actionable")
-            in 0 .. 100 -> {
-                buildPlayerIndicators()
-                viewModel.currentChallengeIndex = challengeInfo
-                showChallengeHint()
-            }
-            else -> toastUnknownMessage("2 " + messageParts.joinToString("$"))
-        }
     }
 
     private fun processCountdown(rawCountdown: String) {

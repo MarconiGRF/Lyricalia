@@ -4,3 +4,4 @@ android/.gradle
 api/.swiftpm
 api/Sources/api/Persistence/*
 db.sqlite
+android/.kotlin/*

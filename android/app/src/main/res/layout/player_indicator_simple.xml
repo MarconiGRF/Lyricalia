@@ -5,6 +5,24 @@
     android:layout_height="wrap_content"
     android:layout_width="wrap_content"
     android:layout_marginHorizontal="5dp">
+    <ImageView
+        android:id="@+id/playerCheckmark"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:alpha="0"
+        android:translationZ="2dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/baseline_check_24" />
+    <ImageView
+        android:id="@+id/playerGlyphContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/playerCheckmark"
+        android:layout_width="36dp"
+        android:layout_marginTop="-3dp"
+        android:layout_height="36dp"
+        android:src="@drawable/full_circle"
+        app:tint="#FF48435C"/>
     <TextView
         android:id="@+id/playerGlyph"
         android:layout_width="wrap_content"
@@ -18,12 +36,4 @@
         android:translationZ="1dp"
         android:fontFamily="@font/domine"
         android:textColor="@color/lyWhite"/>
-    <ImageView
-        android:id="@+id/playerGlyphContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:src="@drawable/full_circle"
-        app:tint="#FF48435C"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

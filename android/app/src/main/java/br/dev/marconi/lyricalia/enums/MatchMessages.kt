@@ -6,14 +6,13 @@ class MatchMessages {
 
         const val RECEIVABLE_WAITING = "waiting"
         const val RECEIVABLE_PROCESSING = "processing"
-        const val RECEIVABLE_PLAYERS = "players"
         const val RECEIVABLE_CHALLENGE = "challenge"
         const val RECEIVABLE_COUNTDOWN = "countdown"
         const val RECEIVABLE_END = "end"
         const val RECEIVABLE_READY = "ready"
         const val RECEIVABLE_READY_FULL = "$ENTITY\$ready"
-        const val RECEIVABLE_PROGRESS = "progress"
         const val RECEIVABLE_PODIUM = "podium"
+        const val RECEIVABLE_SUBMITTED = "submitted"
 
         // SENDABLES
         fun PROGRESS(userId: String) = "player\$progress$$userId"
