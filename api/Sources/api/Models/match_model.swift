@@ -21,8 +21,12 @@ class PlayingUser: @unchecked Sendable {
         self.isReady = false
     }
 
-    func toPodium() -> PlayerPodium {
-        .init(id: user.id!, score: score)
+    func toPodium(_ currentChallengeIndex: Int) -> PlayerPodium {
+        .init(
+            id: user.id!,
+            score: score,
+            submission: submissions[currentChallengeIndex]
+        )
     }
 }
 
@@ -39,7 +43,7 @@ class Match: @unchecked Sendable {
     var totalTime = 15
     var countdown: Int = -1 {
         didSet {
-            if (countdown > 0) {
+            if (countdown >= 0) {
                 Task {
                     try await Task.sleep(nanoseconds: 1_000_000_000)
                     print("    -> Countdown: \(countdown)")
@@ -49,11 +53,6 @@ class Match: @unchecked Sendable {
                     }
                     countdown -= 1
                 }
-            } else if (countdown == 0) {
-                print("    -> \(countdown)? Time's up! Calculating Scores")
-                calculateScores()
-
-                Task { try await sendPodium() }
             }
         }
     }
@@ -297,6 +296,9 @@ class Match: @unchecked Sendable {
 
                 self.countdown = 0
                 players.forEach { $0.isReady = false }
+
+                calculateScores()
+                try await sendPodium()
             }
         } catch {
             print("    !!! Failed to ack player submission -> \(error)")
@@ -319,16 +321,23 @@ class Match: @unchecked Sendable {
 
     private func sendPodium() async throws {
         let playerPodium = self.players
-            .map { $0.toPodium() }
+            .map { $0.toPodium(currentChallengeIndex!) }
             .sorted{ $0.score > $1.score }
 
         let encoder = JSONEncoder()
         // encoder.outputFormatting = .withoutEscapingSlashes
         let jsonifiedPodium =  String(data: try encoder.encode(playerPodium), encoding: .utf8)!
+        let jsonifiedAnswer =  String(
+            data: try encoder.encode(
+                lyricsOriginalVerses[chosenSongs[currentChallengeIndex!].spotifyId]
+            ),
+            encoding: .utf8
+        )!
 
         for player in players {
             Task {
-                try await Task.sleep(nanoseconds: 1_000_000_000)
+                try await Task.sleep(nanoseconds: 2_000_000_000)
+                try await player.ws.send(MatchMessages.ANSWER.rawValue + jsonifiedAnswer)
                 try await player.ws.send(MatchMessages.PODIUM.rawValue + jsonifiedPodium)
             }
         }
@@ -406,6 +415,7 @@ class Match: @unchecked Sendable {
         for (spotifyId, lyric) in self.lyrics {
             // Guaranteeing that no 1-verse excerpt is selected.
             var backoffLimit = 0
+
             var excerptVerses = [""]
             while (excerptVerses.count == 1 && backoffLimit <= 5) {
                 excerptVerses = lyric.plainLyrics
@@ -413,6 +423,12 @@ class Match: @unchecked Sendable {
                 backoffLimit += 1
             }
             if (backoffLimit == 6 || excerptVerses.count <= 1) { continue }
+
+            // Avoiding way too big sections
+            if (excerptVerses.count > 5) {
+                print("    -> Long excerpt while processing! Cutting it into 5-verse limit.")
+                excerptVerses = Array(excerptVerses[..<5])
+            }
 
             let deletionAmount = Int(ceil(Double(excerptVerses.count) / Double(3)))
             self.lyricsOriginalVerses[spotifyId] = excerptVerses

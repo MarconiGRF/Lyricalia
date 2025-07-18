@@ -7,6 +7,7 @@ class MatchMessages {
         const val RECEIVABLE_WAITING = "waiting"
         const val RECEIVABLE_PROCESSING = "processing"
         const val RECEIVABLE_CHALLENGE = "challenge"
+        const val RECEIVABLE_ANSWER = "answer"
         const val RECEIVABLE_COUNTDOWN = "countdown"
         const val RECEIVABLE_END = "end"
         const val RECEIVABLE_READY = "ready"

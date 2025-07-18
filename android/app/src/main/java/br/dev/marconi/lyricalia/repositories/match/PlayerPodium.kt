@@ -8,5 +8,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PlayerPodium (
     val id: String,
-    val score: Int
+    val score: Int,
+    val submission: List<String>
 )

@@ -26,6 +26,7 @@ class MatchOngoingViewModel(
     var isHost: Boolean = false
     var challengeSet: MatchChallengeSet? = null
     var currentChallengeIndex: Int = -1
+    var currentChallengeAnswer: List<String> = emptyList()
     var hasSubmittedAnswer = false
 
     private val baseUrl: String

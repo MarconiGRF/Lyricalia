@@ -100,6 +100,7 @@ class MatchOngoingActivity: AppCompatActivity() {
         when (messageParts[1]) {
             MatchMessages.RECEIVABLE_WAITING -> updateLoadingHint("ESPERANDO JOGADORES...")
             MatchMessages.RECEIVABLE_PROCESSING -> updateLoadingHint("LETRANDO...")
+            MatchMessages.RECEIVABLE_ANSWER -> saveChallengeAnswer(messageParts[2])
             MatchMessages.RECEIVABLE_CHALLENGE -> processChallengeActionable(messageParts)
             MatchMessages.RECEIVABLE_COUNTDOWN -> processCountdown(messageParts[2])
             MatchMessages.RECEIVABLE_PODIUM -> showPodium(messageParts[2])
@@ -115,6 +116,12 @@ class MatchOngoingActivity: AppCompatActivity() {
             }
             else -> { toastUnknownMessage("1 " + messageParts.joinToString("$")) }
         }
+    }
+
+    private fun saveChallengeAnswer(jsonifiedAnswer: String) {
+        viewModel.currentChallengeAnswer = Gson()
+            .fromJson<List<String>>(jsonifiedAnswer, object : TypeToken<List<String>>() {}.type)
+
     }
 
     private fun processSubmitted(playerId: String) {
@@ -202,21 +209,23 @@ class MatchOngoingActivity: AppCompatActivity() {
 
         val currentTime = countdown[1].toFloat()
 
-        val percentage = currentTime / countdown[0].toFloat()
-        lifecycleScope.launch { updateProgressBar(percentage) }
+        if (currentTime >= 0f) {
+            val percentage = currentTime / countdown[0].toFloat()
+            lifecycleScope.launch { updateProgressBar(percentage) }
 
-        binding.header.alpha = 1f
-        binding.header.text = countdown[1]
+            binding.header.alpha = 1f
+            binding.header.text = countdown[1]
 
-        if (!viewModel.hasSubmittedAnswer) {
-            binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGreen, theme))
-            binding.submitButton.setTextColor(resources.getColor(R.color.Black, theme))
-            binding.submitButton.isClickable = true
-            binding.submitButton.visibility = VISIBLE
-        }
+            if (!viewModel.hasSubmittedAnswer) {
+                binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGreen, theme))
+                binding.submitButton.setTextColor(resources.getColor(R.color.Black, theme))
+                binding.submitButton.isClickable = true
+                binding.submitButton.visibility = VISIBLE
+            }
 
-        if (currentTime == 0f) {
-            processTimesUp()
+            if (currentTime == 0f) {
+                processTimesUp()
+            }
         }
     }
 
