@@ -187,27 +187,61 @@ class MatchOngoingActivity: AppCompatActivity() {
         binding.animatedProgressBar.alpha = 0f
 
         val podium = Gson().fromJson<List<PlayerPodium>>(jsonPodium, object : TypeToken<List<PlayerPodium>>() {}.type)
-        podium.forEach { podiumInfo ->
-            val answerCard = LayoutInflater.from(this@MatchOngoingActivity).inflate(
-                R.layout.answer_card,
-                binding.answerCarousel,
-                false
-            ).apply {
-                id = View.generateViewId()
-                background = ContextCompat.getDrawable(applicationContext, R.drawable.card_background)?.mutate()
-                this.findViewById<TextView>(R.id.playerName).text = matchPlayers.players[
-                    matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)
-                ].name
-                this.findViewById<TextView>(R.id.lyrics).text = podiumInfo.submission.joinToString("\n")
+        lifecycleScope.launch {
+            delay(1000)
+
+            podium.forEach { podiumInfo ->
+                val answerCard = LayoutInflater.from(this@MatchOngoingActivity).inflate(
+                    R.layout.answer_card,
+                    binding.answerCarousel,
+                    false
+                ).apply {
+                    id = View.generateViewId()
+                    background = ContextCompat.getDrawable(applicationContext, R.drawable.card_background)?.mutate()
+                    this.findViewById<TextView>(R.id.playerName).text = matchPlayers.players[
+                        matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)
+                    ].name
+                    this.findViewById<TextView>(R.id.lyrics).text = podiumInfo.submission.joinToString("\n")
+                }
+                binding.answerCarousel.addView(answerCard)
             }
 
-            binding.answerCarousel.addView(answerCard)
+            binding.answerCarouselScrollWrapper.visibility = VISIBLE
+            binding.answerCarouselScrollWrapper.animate().alpha(1f).setDuration(800).start()
         }
 
-        binding.answerCarouselScrollWrapper.visibility = VISIBLE
-        binding.answerCarouselScrollWrapper.animate().alpha(1f).setDuration(700).start()
+        lifecycleScope.launch {
+            binding.playerIndicators.visibility = GONE
+            podium.forEachIndexed { idx, podiumInfo ->
+                delay(1000)
 
-        binding.playerIndicators.visibility = GONE
+                val scoreIndicator = LayoutInflater.from(this@MatchOngoingActivity).inflate(
+                    R.layout.player_indicator_horizontal,
+                    binding.answerCarousel,
+                    false
+                ).apply { id = View.generateViewId() }
+
+                scoreIndicator.findViewById<TextView>(R.id.playerGlyph).also {
+                    it.setTextColor(
+                        matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][0]
+                    )
+                    it.text =  matchPlayers.players[
+                        matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)
+                    ].name.first().toString()
+                }
+                scoreIndicator.findViewById<ImageView>(R.id.playerGlyphContainer).setColorFilter(
+                    matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][1]
+                )
+                scoreIndicator.findViewById<TextView>(R.id.playerScore).also { it.text = podiumInfo.score.toString() }
+                scoreIndicator.translationX += idx * -(30.fromDpToPx())
+
+                binding.playerScores.addView(scoreIndicator)
+            }
+
+            binding.playerScores.visibility = VISIBLE
+            binding.playerScores.animate().alpha(1f).setDuration(800).start()
+        }
+
 //        binding.podiumLayout.addView(
 //            TextView(this@MatchOngoingActivity).apply {
 //                text = jsonPodium
@@ -247,6 +281,9 @@ class MatchOngoingActivity: AppCompatActivity() {
     }
 
     private fun processTimesUp() {
+        // TODO: Find out why non-submit isnt working
+        // TODO: Hide keyboard on unfocus
+
         binding.animatedProgressBar.background = ContextCompat.getDrawable(applicationContext, R.drawable.rectangle_shape_red)
         lifecycleScope.launch { updateProgressBar(1f) }
         binding.header.text = "TEMPO!"
