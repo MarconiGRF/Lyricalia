@@ -7,7 +7,6 @@ class MatchStateManager: @unchecked Sendable {
     private var matches: [String : Match] = [:]
 
     private var artists = [
-        "ImagineDragons",
         "Maneskin",
         "Gaga",
         "Bey",

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:id="@+id/baseCardLayout"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="300dp"
+    android:layout_weight="0.8"
+    android:layout_marginHorizontal="5dp"
+    android:background="@drawable/card_background_green"
+    android:weightSum="1"
+    android:baselineAligned="false"
+    android:padding="20dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+        <TextView
+            android:id="@+id/playerName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:text="Player Name"
+            android:autoSizeTextType="uniform"
+            android:fontFamily="@font/domine"
+            android:textColor="@color/lyGray"/>
+        <TextView
+            android:id="@+id/lyrics"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/playerName"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="20dp"
+            android:text="They've caught us out\nThis is the last dance\nSee, I've never been anything\nBut another freak show"
+            android:textStyle="italic"
+            android:textAlignment="center"
+            android:autoSizeTextType="uniform"
+            android:translationZ="1dp"
+            android:fontFamily="@font/domine"
+            android:textColor="@color/lyGray"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

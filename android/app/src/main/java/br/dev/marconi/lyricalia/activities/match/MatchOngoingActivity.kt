@@ -37,7 +37,6 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.setPadding
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.AutoTransition
@@ -47,7 +46,6 @@ import br.dev.marconi.lyricalia.activities.MatchPlayers
 import br.dev.marconi.lyricalia.databinding.ActivityMatchOngoingBinding
 import br.dev.marconi.lyricalia.enums.HostCommands
 import br.dev.marconi.lyricalia.enums.MatchMessages
-import br.dev.marconi.lyricalia.enums.PlayerMessages
 import br.dev.marconi.lyricalia.repositories.match.PlayerPodium
 import br.dev.marconi.lyricalia.utils.NavigationUtils
 import br.dev.marconi.lyricalia.viewModels.match.MatchOngoingViewModel
@@ -122,6 +120,16 @@ class MatchOngoingActivity: AppCompatActivity() {
         viewModel.currentChallengeAnswer = Gson()
             .fromJson<List<String>>(jsonifiedAnswer, object : TypeToken<List<String>>() {}.type)
 
+        val answerCard = LayoutInflater.from(this@MatchOngoingActivity).inflate(
+            R.layout.answer_card, binding.answerCarousel, false
+        ).apply {
+            this.findViewById<TextView>(R.id.playerName).text = "Resposta certa"
+            this.findViewById<TextView>(R.id.lyrics).text = viewModel.currentChallengeAnswer.joinToString("\n")
+        }
+        answerCard.background = ContextCompat.getDrawable(applicationContext, R.drawable.card_background_green)?.mutate()
+        answerCard.id = View.generateViewId()
+
+        binding.answerCarousel.addView(answerCard)
     }
 
     private fun processSubmitted(playerId: String) {
@@ -179,28 +187,40 @@ class MatchOngoingActivity: AppCompatActivity() {
                     binding.submitButton.alpha = 1f
                 }}
             ).start()
-        binding.currentChallengeHint.animate().alpha(0f).setDuration(350)
-            .setListener(
-                object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
-                    binding.currentChallengeHint.visibility = INVISIBLE
-                    binding.currentChallengeHint.alpha = 1f
-                }}
-            ).start()
-
         binding.animatedProgressBar.alpha = 0f
 
         val podium = Gson().fromJson<List<PlayerPodium>>(jsonPodium, object : TypeToken<List<PlayerPodium>>() {}.type)
-
-        binding.podiumLayout.addView(
-            TextView(this@MatchOngoingActivity).apply {
-                text = jsonPodium
-                layoutParams = ConstraintLayout.LayoutParams(
-                    ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                    ConstraintLayout.LayoutParams.WRAP_CONTENT
-                )
+        podium.forEach { podiumInfo ->
+            val answerCard = LayoutInflater.from(this@MatchOngoingActivity).inflate(
+                R.layout.answer_card,
+                binding.answerCarousel,
+                false
+            ).apply {
+                id = View.generateViewId()
+                background = ContextCompat.getDrawable(applicationContext, R.drawable.card_background)?.mutate()
+                this.findViewById<TextView>(R.id.playerName).text = matchPlayers.players[
+                    matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)
+                ].name
+                this.findViewById<TextView>(R.id.lyrics).text = podiumInfo.submission.joinToString("\n")
             }
-        )
-        binding.podiumLayout.visibility = VISIBLE
+
+            binding.answerCarousel.addView(answerCard)
+        }
+
+        binding.answerCarouselScrollWrapper.visibility = VISIBLE
+        binding.answerCarouselScrollWrapper.animate().alpha(1f).setDuration(700).start()
+
+        binding.playerIndicators.visibility = GONE
+//        binding.podiumLayout.addView(
+//            TextView(this@MatchOngoingActivity).apply {
+//                text = jsonPodium
+//                layoutParams = ConstraintLayout.LayoutParams(
+//                    ConstraintLayout.LayoutParams.WRAP_CONTENT,
+//                    ConstraintLayout.LayoutParams.WRAP_CONTENT
+//                )
+//            }
+//        )
+//        binding.podiumLayout.visibility = VISIBLE
     }
 
     private fun processCountdown(rawCountdown: String) {
