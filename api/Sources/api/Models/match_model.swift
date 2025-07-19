@@ -425,9 +425,9 @@ class Match: @unchecked Sendable {
             if (backoffLimit == 6 || excerptVerses.count <= 1) { continue }
 
             // Avoiding way too big sections
-            if (excerptVerses.count > 5) {
+            if (excerptVerses.count > 4) {
                 print("    -> Long excerpt while processing! Cutting it into 5-verse limit.")
-                excerptVerses = Array(excerptVerses[..<5])
+                excerptVerses = Array(excerptVerses[..<4])
             }
 
             let deletionAmount = Int(ceil(Double(excerptVerses.count) / Double(3)))

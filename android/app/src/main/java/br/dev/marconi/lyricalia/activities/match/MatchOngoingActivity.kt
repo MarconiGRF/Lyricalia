@@ -134,19 +134,16 @@ class MatchOngoingActivity: AppCompatActivity() {
 
     private fun processSubmitted(playerId: String) {
         val donePlayerIdx = matchPlayers.players.map{ it.id }.indexOf(playerId)
-        if (donePlayerIdx == -1) { toastUnknownMessage("Player submitted but not found on indicators") }
+        if (donePlayerIdx == -1) {
+            toastUnknownMessage("Player submitted but not found on indicators")
+            return
+        }
 
         val playerIndicatorInstance = binding.playerIndicators.findViewById<View>(matchPlayers.viewsId[donePlayerIdx])
-        val layoutParams = playerIndicatorInstance.layoutParams as LinearLayout.LayoutParams
-
-        ValueAnimator.ofInt(0, 40.fromDpToPx()).apply {
-            duration = 100
-            addUpdateListener { animator ->
-                layoutParams.bottomMargin = animator.animatedValue as Int
-                playerIndicatorInstance.layoutParams = layoutParams
-            }
-            start()
-        }
+        playerIndicatorInstance.animate()
+            .translationY(-40.fromDpToPx().toFloat())
+            .setDuration(100)
+            .start()
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerCheckmark).alpha = 1f
     }
 
