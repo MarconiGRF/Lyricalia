@@ -18,6 +18,7 @@ import android.view.View.GONE
 import android.view.View.INVISIBLE
 import android.view.View.TEXT_ALIGNMENT_CENTER
 import android.view.View.VISIBLE
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
@@ -37,6 +38,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.AutoTransition
@@ -61,7 +63,7 @@ class MatchOngoingActivity: AppCompatActivity() {
     private lateinit var viewModel: MatchOngoingViewModel
     private lateinit var matchPlayers: MatchPlayers
 
-    private var isGclefAnimated = false
+    private var isGclefAnimated = true
     private var animator: ValueAnimator? = null
     private var challengeInputIds = mutableListOf<Int>()
 
@@ -184,7 +186,7 @@ class MatchOngoingActivity: AppCompatActivity() {
                     binding.submitButton.alpha = 1f
                 }}
             ).start()
-        binding.animatedProgressBar.alpha = 0f
+        binding.animatedProgressBar.animate().alpha(0f).setDuration(350).start()
 
         val podium = Gson().fromJson<List<PlayerPodium>>(jsonPodium, object : TypeToken<List<PlayerPodium>>() {}.type)
         lifecycleScope.launch {
@@ -239,19 +241,56 @@ class MatchOngoingActivity: AppCompatActivity() {
             }
 
             binding.playerScores.visibility = VISIBLE
-            binding.playerScores.animate().alpha(1f).setDuration(800).start()
+            binding.playerScores.animate().alpha(1f).setDuration(800)
+                .setListener(
+                    object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
+                        binding.iterateChallengeButton.visibility = VISIBLE
+                        binding.iterateChallengeButton.animate().alpha(1f).setDuration(800).start()
+                        binding.iterateChallengeButton.setOnClickListener { iterateChallenge() }
+                    }}
+                )
+                .start()
+        }
+    }
+
+    private fun iterateChallenge() {
+        // If challenge is the final song, then go to popper screen
+
+        binding.mainContent.removeAllViews()
+        binding.mainContent.visibility = GONE
+
+        binding.playerIndicators.removeAllViews()
+        binding.playerIndicators.visibility = GONE
+
+        challengeInputIds = mutableListOf<Int>()
+        matchPlayers.viewsId = arrayListOf()
+
+        binding.divider.visibility = INVISIBLE
+        binding.header.text = ""
+
+        // Animate
+        binding.playerScores.removeAllViews()
+        binding.playerScores.visibility = GONE
+        binding.iterateChallengeButton.visibility = GONE
+
+        binding.answerCarouselScrollWrapper.visibility = GONE
+        binding.answerCarousel.removeAllViews()
+
+        viewModel.hasSubmittedAnswer = false
+
+        binding.currentChallengeHint.visibility = INVISIBLE
+        binding.challengeHint.layoutParams = LinearLayout.LayoutParams(-2, -2).also {
+            it.setMargins(0, 0, 0, 60.fromDpToPx())
+            it.gravity = Gravity.CENTER
+        }
+        ConstraintSet().also {
+            it.clone(binding.mainLayout)
+            it.connect(binding.currentChallengeHint.id, ConstraintSet.BOTTOM, binding.mainLayout.id, ConstraintSet.BOTTOM)
+            it.connect(binding.currentChallengeHint.id, ConstraintSet.TOP, binding.mainLayout.id, ConstraintSet.TOP)
+            it.applyTo(binding.mainLayout)
         }
 
-//        binding.podiumLayout.addView(
-//            TextView(this@MatchOngoingActivity).apply {
-//                text = jsonPodium
-//                layoutParams = ConstraintLayout.LayoutParams(
-//                    ConstraintLayout.LayoutParams.WRAP_CONTENT,
-//                    ConstraintLayout.LayoutParams.WRAP_CONTENT
-//                )
-//            }
-//        )
-//        binding.podiumLayout.visibility = VISIBLE
+        viewModel.notifyReadinessToChallenge()
     }
 
     private fun processCountdown(rawCountdown: String) {
@@ -281,8 +320,7 @@ class MatchOngoingActivity: AppCompatActivity() {
     }
 
     private fun processTimesUp() {
-        // TODO: Find out why non-submit isnt working
-        // TODO: Hide keyboard on unfocus
+        WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
 
         binding.animatedProgressBar.background = ContextCompat.getDrawable(applicationContext, R.drawable.rectangle_shape_red)
         lifecycleScope.launch { updateProgressBar(1f) }
@@ -321,6 +359,8 @@ class MatchOngoingActivity: AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun showChallengeHint() {
+        showLoadingOverlays(false)
+
         binding.submitButton.visibility = GONE
         binding.submitButton.isClickable = false
 
@@ -330,6 +370,7 @@ class MatchOngoingActivity: AppCompatActivity() {
         binding.challengeIndex.text = "${viewModel.currentChallengeIndex + 1}/${viewModel.challengeSet!!.songs.size}"
         binding.challengeIndex.visibility = VISIBLE
 
+        binding.challengeHint.alpha = 1f
         binding.currentChallengeHint.alpha = 0f
         binding.currentChallengeHint.visibility = VISIBLE
         binding.currentChallengeHint.animate()
@@ -375,8 +416,12 @@ class MatchOngoingActivity: AppCompatActivity() {
         delay(1000)
         viewModel.notifyReadinessToInput()
 
-        binding.divider.visibility = VISIBLE
         binding.animatedProgressBar.visibility = VISIBLE
+        binding.animatedProgressBar.alpha = 1f
+        binding.animatedProgressBar.background = ContextCompat.getDrawable(applicationContext, R.drawable.rectangle_shape)
+
+        binding.divider.visibility = VISIBLE
+
         binding.playerIndicators.visibility = VISIBLE
         binding.mainContent.visibility = VISIBLE
         binding.submitButton.setOnClickListener { submitAnswer()  }
@@ -572,19 +617,18 @@ class MatchOngoingActivity: AppCompatActivity() {
         })
 
         ConstraintSet().also {
-            it.clone(binding.currentChallengeHint)
-
-            it.constrainHeight(binding.challengeHint.id, 0)
-            it.clear(binding.songNameHint.id, ConstraintSet.BOTTOM)
-            it.constrainHeight(binding.songNameHint.id, 28.fromDpToPx())
-            it.constrainHeight(binding.artistHint.id, 18.fromDpToPx())
-
-            it.applyTo(binding.currentChallengeHint)
-        }
-        ConstraintSet().also {
             it.clone(binding.mainLayout)
+            it.connect(
+                binding.currentChallengeHint.id, ConstraintSet.TOP,
+                binding.divider.id, ConstraintSet.BOTTOM
+            )
             it.clear(binding.currentChallengeHint.id, ConstraintSet.BOTTOM)
             it.applyTo(binding.mainLayout)
+        }
+
+        binding.challengeHint.layoutParams = LinearLayout.LayoutParams(-2, 0).also {
+            it.setMargins(0, 0, 0, 0)
+            it.gravity = Gravity.TOP
         }
     }
 
@@ -651,6 +695,8 @@ class MatchOngoingActivity: AppCompatActivity() {
                 }
             }
         })
+
+        lifecycleScope.launch { animateGClef() }
     }
 
     private fun toastUnknownMessage(message: String) {
@@ -665,42 +711,28 @@ class MatchOngoingActivity: AppCompatActivity() {
     // Loading stuff
     //
     private fun updateLoadingHint(hint: String) {
-        binding.loadingHint.animate()
-            .alpha(0f)
-            .setDuration(550)
-            .setListener(
-                object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        binding.loadingHint.text = hint
-                        binding.loadingHint.animate()
-                            .alpha(1f)
-                            .setDuration(550)
-                            .setListener(null)
-                            .start()
-                    }
-                }
-            )
-            .start()
+        isGclefAnimated = true
+        binding.gclef.visibility = VISIBLE
+        binding.gclef.alpha = 1f
+
+        binding.loadingHint.alpha = 1f
+        binding.loadingHint.visibility = VISIBLE
+        binding.loadingHint.text = hint
     }
 
     private suspend fun animateGClef() {
-        if (!isGclefAnimated) {
-            isGclefAnimated = true
-
-            while (isGclefAnimated) {
-                delay(500)
-                if (binding.gclef.rotation == 22f) {
-                    binding.gclef.rotation = -15f
-                } else {
-                    binding.gclef.rotation = 22f
-                }
+        while (isGclefAnimated) {
+            delay(500)
+            if (binding.gclef.rotation == 22f) {
+                binding.gclef.rotation = -15f
+            } else {
+                binding.gclef.rotation = 22f
             }
         }
     }
 
     private fun showLoadingOverlays(visible: Boolean) {
         if (visible) {
-            lifecycleScope.launch { animateGClef() }
             binding.gclef.visibility = VISIBLE
             binding.gclef.animate()
                 .alpha(1f)
@@ -716,7 +748,6 @@ class MatchOngoingActivity: AppCompatActivity() {
         } else {
             binding.gclef.visibility = GONE
             binding.loadingHint.visibility = GONE
-            isGclefAnimated = false
         }
     }
 

@@ -66,6 +66,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     ksp("androidx.room:room-compiler:2.7.1")
+    implementation("nl.dionsegijn:konfetti-xml:2.0.5")
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

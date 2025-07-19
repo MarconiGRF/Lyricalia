@@ -40,7 +40,7 @@ class Match: @unchecked Sendable {
     var chosenSongs: [Song] = []
     var lyrics: [String : Lyric] = [:]
 
-    var totalTime = 15
+    var totalTime = 30
     var countdown: Int = -1 {
         didSet {
             if (countdown >= 0) {
@@ -254,6 +254,8 @@ class Match: @unchecked Sendable {
                 }
 
                 players.forEach { $0.isReady = false }
+            } else {
+                Task { try await player!.ws.send(MatchMessages.WAITING.rawValue) }
             }
         } catch {
             print("    !!! Failed to ack player readinesss for challenge -> \(error)")
@@ -344,6 +346,8 @@ class Match: @unchecked Sendable {
     }
 
     private func calculateScores() {
+        // Instead of calculating for all players, calculate for each player on submission!
+
         do {
             let totalSizeSimilarityPoints = 1000
             let totalContentSimilarityPoints = 3000
@@ -360,6 +364,7 @@ class Match: @unchecked Sendable {
                 ]![verseIndex]
 
                 for player in players {
+                    print("    -> Score for \(player.user.name)...")
                     let playerSectionSubmission = player.submissions[currentChallengeIndex!]
 
                     // Calculate points by size similarity
@@ -381,13 +386,15 @@ class Match: @unchecked Sendable {
                     if (sizeDiscountPoints < totalSizeSimilarityPoints) {
                         player.score += totalSizeSimilarityPoints - sizeDiscountPoints
                     }
+                    print("    -> Discount points of size similarity: \(sizeDiscountPoints)")
 
                     // Calculate points by content similarity
                     // The farthest the distance to make the strings equal, the more points player loses
                     /// This will return 0-N number, thus only * 100 is applied (also due to higher weight on final points)
                     let contentSimilarityDiscountPoints = LevenshteinDistance.calculate(
-                        originalVerse, playerSectionSubmission[verseIndex]
+                        originalVerse.lowercased(), playerSectionSubmission[verseIndex].lowercased()
                     ) * 100
+                    print("    -> Discount points of content similarity: \(contentSimilarityDiscountPoints)")
                     // Avoid negative scores
                     if (contentSimilarityDiscountPoints < totalContentSimilarityPoints) {
                         player.score += totalContentSimilarityPoints - contentSimilarityDiscountPoints

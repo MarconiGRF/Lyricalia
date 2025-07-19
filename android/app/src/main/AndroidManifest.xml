@@ -44,17 +44,17 @@
             android:exported="true"/>
         <activity
             android:name=".activities.match.MatchCreateActivity"
-            android:exported="true"/>
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"/>
         <activity
             android:name=".activities.match.MatchWaitingActivity"
             android:exported="true"/>
         <activity
             android:name=".activities.match.MatchJoinActivity"
-            android:windowSoftInputMode="stateVisible"
             android:exported="true"/>
         <activity
             android:name=".activities.match.MatchOngoingActivity"
-            android:windowSoftInputMode="stateVisible"
+            android:windowSoftInputMode="adjustPan"
             android:exported="true"/>
     </application>
 
