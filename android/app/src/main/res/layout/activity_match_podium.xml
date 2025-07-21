@@ -10,12 +10,12 @@
         android:gravity="center_horizontal"
         android:orientation="horizontal"
         android:background="@color/lyWhite"
-        android:padding="10dp"
+        android:paddingVertical="10dp"
         tools:context=".activities.match.MatchJoinActivity"
         android:clipToPadding="false">
 
         <TextView
-            android:id="@+id/newMatchTitle"
+            android:id="@+id/podiumTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
@@ -28,34 +28,33 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:id="@+id/mainContent"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/backButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/podiumTitle"
             app:layout_constraintVertical_bias="0"
-            android:paddingHorizontal="10dp"
+            android:paddingVertical="20dp"
             android:orientation="vertical">
+        </LinearLayout>
 
-            <Button
-                android:id="@+id/joinMatchButton"
-                android:minWidth="200dp"
-                android:layout_width="wrap_content"
-                android:minHeight="50dp"
-                android:layout_height="wrap_content"
-                android:text="@string/back_to_menu"
-                android:fontFamily="@font/domine"
-                android:textStyle="bold"
-                android:textColor="@color/Black"
-                android:backgroundTint="@color/lyGreen"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        <Button
+            android:id="@+id/backButton"
+            android:minWidth="200dp"
+            android:layout_width="wrap_content"
+            android:minHeight="50dp"
+            android:layout_height="wrap_content"
+            android:text="@string/back_to_menu"
+            android:fontFamily="@font/domine"
+            android:textStyle="bold"
+            android:textColor="@color/Black"
+            android:backgroundTint="@color/lyGreen"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

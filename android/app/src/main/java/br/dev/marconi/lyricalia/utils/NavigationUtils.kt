@@ -55,8 +55,14 @@ class NavigationUtils {
                 matchPlayers
             )
 
-        fun navigateToMatchPodium(packageContext: Context, jsonifiedPodium: String) =
-            navigateToActivity(packageContext, MatchPodiumActivity::class.java, canGoBack = false, jsonifiedPodium)
+        fun navigateToMatchPodium(packageContext: Context, jsonifiedPodium: String, matchPlayers: MatchPlayers) =
+            navigateToActivity(
+                packageContext = packageContext,
+                cls = MatchPodiumActivity::class.java,
+                canGoBack = false,
+                matchPlayersExtra = matchPlayers,
+                jsonifiedPodiumExtra =  jsonifiedPodium
+            )
 
         private fun navigateToActivity(
             packageContext: Context,
@@ -65,7 +71,7 @@ class NavigationUtils {
             matchIdExtra: String? = null,
             isHostExtra: Boolean? = false,
             matchPlayersExtra: MatchPlayers? = null,
-            jsonifiedPodium: String? = null
+            jsonifiedPodiumExtra: String? = null
         ) {
             val intent = Intent(packageContext, cls)
             if (!canGoBack) {
@@ -81,8 +87,8 @@ class NavigationUtils {
             if (matchPlayersExtra != null) {
                 intent.putExtra(MATCH_PLAYERS_PARAMETER_ID, matchPlayersExtra)
             }
-            if (jsonifiedPodium != null) {
-                intent.putExtra(JSONIFIED_PODIUM_PARAMETER_ID, jsonifiedPodium)
+            if (jsonifiedPodiumExtra != null) {
+                intent.putExtra(JSONIFIED_PODIUM_PARAMETER_ID, jsonifiedPodiumExtra)
             }
 
             packageContext.startActivity(intent)
@@ -91,6 +97,6 @@ class NavigationUtils {
         const val IS_HOST_PARAMETER_ID = "isHost"
         const val MATCH_ID_PARAMETER_ID = "matchId"
         const val MATCH_PLAYERS_PARAMETER_ID = "matchPlayers"
-        const val JSONIFIED_PODIUM_PARAMETER_ID = "matchPlayers"
+        const val JSONIFIED_PODIUM_PARAMETER_ID = "jsonifiedPodium"
     }
 }

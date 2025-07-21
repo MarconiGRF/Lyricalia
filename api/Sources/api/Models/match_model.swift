@@ -474,7 +474,7 @@ class Match: @unchecked Sendable {
 
                 case ExcerptSection.ENDING:
                     var idx = excerptVerses.count - 1
-                    while ( (idx > excerptVerses.count - deletionAmount) && idx >= 0 ) {
+                    while ( (idx >= excerptVerses.count - deletionAmount) && idx >= 0 ) {
                         excerptVerses[idx] = "lyChal_\(excerptVerses[idx].count)"
                         idx -= 1
                     }

@@ -19,7 +19,6 @@ import android.view.View.GONE
 import android.view.View.INVISIBLE
 import android.view.View.TEXT_ALIGNMENT_CENTER
 import android.view.View.VISIBLE
-import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.animation.DecelerateInterpolator
 import android.view.inputmethod.InputMethodManager
@@ -32,7 +31,6 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
@@ -121,7 +119,7 @@ class MatchOngoingActivity: AppCompatActivity() {
     }
 
     private fun goToFinalPodium(jsonifiedPodium: String) {
-        NavigationUtils.navigateToMatchPodium(this, jsonifiedPodium)
+        NavigationUtils.navigateToMatchPodium(this, jsonifiedPodium, matchPlayers)
     }
 
     private fun saveChallengeAnswer(jsonifiedAnswer: String) {
@@ -154,7 +152,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             .start()
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerCheckmark).alpha = 1f
 
-        MediaPlayer.create(applicationContext, R.raw.tick).start()
+        MediaPlayer.create(applicationContext, R.raw.pop).start()
     }
 
     private fun processChallengeActionable(messageParts: List<String>) {
@@ -174,7 +172,7 @@ class MatchOngoingActivity: AppCompatActivity() {
         binding.header.animate().alpha(0f).setDuration(350)
             .setListener(
                 object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
-                    binding.header.text = "Pódio"
+                    binding.header.text = "Respostas"
                     binding.header.setTextColor(resources.getColor(R.color.lyGray, theme))
                     binding.header.animate().alpha(1f).setDuration(350).setListener(null).start()
                 }}
@@ -222,28 +220,41 @@ class MatchOngoingActivity: AppCompatActivity() {
 
         lifecycleScope.launch {
             binding.playerIndicators.visibility = GONE
+
+            if (viewModel.currentChallengeIndex + 1 == viewModel.challengeSet!!.songs.size) {
+                binding.iterateChallengeButton.visibility = VISIBLE
+                binding.iterateChallengeButton.animate().alpha(1f).setDuration(800).start()
+                binding.iterateChallengeButton.setOnClickListener { iterateChallenge() }
+
+                return@launch
+            }
+
             podium.forEachIndexed { idx, podiumInfo ->
                 delay(1000)
 
                 val scoreIndicator = LayoutInflater.from(this@MatchOngoingActivity).inflate(
-                    R.layout.player_indicator_horizontal,
+                    R.layout.podium_indicator,
                     binding.answerCarousel,
                     false
                 ).apply { id = View.generateViewId() }
 
-                scoreIndicator.findViewById<TextView>(R.id.playerGlyph).also {
-                    it.setTextColor(
-                        matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][0]
-                    )
+                scoreIndicator.findViewById<TextView>(R.id.playerUsername).also {
                     it.text =  matchPlayers.players[
                         matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)
-                    ].name.first().toString()
+                    ].username.toString()
                 }
-                scoreIndicator.findViewById<ImageView>(R.id.playerGlyphContainer).setColorFilter(
-                    matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][1]
-                )
-                scoreIndicator.findViewById<TextView>(R.id.playerScore).also { it.text = podiumInfo.score.toString() }
-                scoreIndicator.translationX += idx * -(30.fromDpToPx())
+                scoreIndicator.findViewById<ImageView>(R.id.playerGlyphContainer).also{
+                    it.setColorFilter(matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][1])
+                    it.translationX = (idx * -(60.fromDpToPx())).toFloat()
+                }
+                scoreIndicator.findViewById<View>(R.id.stick).also {
+                    it.setBackgroundColor(matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][1])
+                    it.translationX = (idx * -(60.fromDpToPx())).toFloat()
+                }
+                scoreIndicator.findViewById<TextView>(R.id.playerScore).also {
+                    it.text = podiumInfo.score.toString()
+                    it.translationX = (idx * -(60.fromDpToPx())).toFloat()
+                }
 
                 binding.playerScores.addView(scoreIndicator)
             }
@@ -313,6 +324,7 @@ class MatchOngoingActivity: AppCompatActivity() {
 
             binding.header.alpha = 1f
             binding.header.text = countdown[1]
+            MediaPlayer.create(applicationContext, R.raw.clock_tick).start()
 
             if (!viewModel.hasSubmittedAnswer) {
                 binding.submitButton.setBackgroundColor(resources.getColor(R.color.lyGreen, theme))
@@ -334,6 +346,7 @@ class MatchOngoingActivity: AppCompatActivity() {
         lifecycleScope.launch { updateProgressBar(1f) }
         binding.header.text = "TEMPO!"
         binding.header.setTextColor(resources.getColor(R.color.lyRed, theme))
+        MediaPlayer.create(applicationContext, R.raw.bell).start()
 
         if (!viewModel.hasSubmittedAnswer) {
             submitAnswer()
