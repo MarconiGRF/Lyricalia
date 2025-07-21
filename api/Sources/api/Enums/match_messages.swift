@@ -8,5 +8,6 @@ enum MatchMessages: String {
     case CHALLENGE_END = "match$challenge$end"
     case COUNTDOWN = "match$countdown$"
     case PODIUM = "match$podium$"
+    case FINAL_PODIUM = "match$final_podium$"
     case SUBMITTED = "match$submitted$"
 }

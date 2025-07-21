@@ -13,6 +13,7 @@ class MatchMessages {
         const val RECEIVABLE_READY = "ready"
         const val RECEIVABLE_READY_FULL = "$ENTITY\$ready"
         const val RECEIVABLE_PODIUM = "podium"
+        const val RECEIVABLE_FINAL_PODIUM = "final_podium"
         const val RECEIVABLE_SUBMITTED = "submitted"
 
         // SENDABLES

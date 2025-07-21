@@ -31,4 +31,6 @@
     <string name="matchId">Nome da sala</string>
     <string name="hint_fill_lyrics">Complete a letra de...</string>
     <string name="send">Enviar</string>
+    <string name="podium">Pódio Final!</string>
+    <string name="back_to_menu">Voltar para o Menu</string>
 </resources>

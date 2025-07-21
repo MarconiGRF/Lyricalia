@@ -10,6 +10,7 @@ import br.dev.marconi.lyricalia.activities.SpotifyLinkActivity
 import br.dev.marconi.lyricalia.activities.match.MatchCreateActivity
 import br.dev.marconi.lyricalia.activities.match.MatchJoinActivity
 import br.dev.marconi.lyricalia.activities.match.MatchOngoingActivity
+import br.dev.marconi.lyricalia.activities.match.MatchPodiumActivity
 import br.dev.marconi.lyricalia.activities.match.MatchWaitingActivity
 import kotlin.jvm.java
 
@@ -54,13 +55,17 @@ class NavigationUtils {
                 matchPlayers
             )
 
+        fun navigateToMatchPodium(packageContext: Context, jsonifiedPodium: String) =
+            navigateToActivity(packageContext, MatchPodiumActivity::class.java, canGoBack = false, jsonifiedPodium)
+
         private fun navigateToActivity(
             packageContext: Context,
             cls: Class<out Activity>,
             canGoBack: Boolean,
             matchIdExtra: String? = null,
             isHostExtra: Boolean? = false,
-            matchPlayersExtra: MatchPlayers? = null
+            matchPlayersExtra: MatchPlayers? = null,
+            jsonifiedPodium: String? = null
         ) {
             val intent = Intent(packageContext, cls)
             if (!canGoBack) {
@@ -76,6 +81,9 @@ class NavigationUtils {
             if (matchPlayersExtra != null) {
                 intent.putExtra(MATCH_PLAYERS_PARAMETER_ID, matchPlayersExtra)
             }
+            if (jsonifiedPodium != null) {
+                intent.putExtra(JSONIFIED_PODIUM_PARAMETER_ID, jsonifiedPodium)
+            }
 
             packageContext.startActivity(intent)
         }
@@ -83,5 +91,6 @@ class NavigationUtils {
         const val IS_HOST_PARAMETER_ID = "isHost"
         const val MATCH_ID_PARAMETER_ID = "matchId"
         const val MATCH_PLAYERS_PARAMETER_ID = "matchPlayers"
+        const val JSONIFIED_PODIUM_PARAMETER_ID = "matchPlayers"
     }
 }

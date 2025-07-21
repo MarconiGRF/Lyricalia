@@ -28,6 +28,8 @@ class PlayingUser: @unchecked Sendable {
             submission: submissions[currentChallengeIndex]
         )
     }
+
+    func toSimplePodium() -> PlayerPodium { .init(id: user.id!,score: score) }
 }
 
 class Match: @unchecked Sendable {
@@ -70,8 +72,13 @@ class Match: @unchecked Sendable {
                     Task { do { try await player.ws.send(MatchMessages.CHALLENGE.rawValue + "\(currentChallengeIndex!)") } }
                 }
             } else {
-                for player in players {
-                    Task { do { try await player.ws.send(MatchMessages.CHALLENGE_END.rawValue) } }
+                Task {
+                    let jsonifiedPodium = try jsonifyCurrentPodium(simplePodium: true)
+                    for player in players {
+                        try await player.ws.send(MatchMessages.FINAL_PODIUM.rawValue + jsonifiedPodium)
+                    }
+
+                    print("Challenge has ended!")
                 }
             }
         }
@@ -319,16 +326,19 @@ class Match: @unchecked Sendable {
 
 
 
-
-
-    private func sendPodium() async throws {
-        let playerPodium = self.players
-            .map { $0.toPodium(currentChallengeIndex!) }
-            .sorted{ $0.score > $1.score }
+    private func jsonifyCurrentPodium(simplePodium: Bool) throws -> String {
+        let playerPodium = simplePodium
+            ? self.players.map { $0.toSimplePodium() }.sorted{ $0.score > $1.score }
+            : self.players.map { $0.toPodium(currentChallengeIndex!) }.sorted{ $0.score > $1.score }
 
         let encoder = JSONEncoder()
-        // encoder.outputFormatting = .withoutEscapingSlashes
-        let jsonifiedPodium =  String(data: try encoder.encode(playerPodium), encoding: .utf8)!
+        return String(data: try encoder.encode(playerPodium), encoding: .utf8)!
+    }
+
+    private func sendPodium() async throws {
+        let jsonifiedPodium = try jsonifyCurrentPodium(simplePodium: false)
+
+        let encoder = JSONEncoder()
         let jsonifiedAnswer =  String(
             data: try encoder.encode(
                 lyricsOriginalVerses[chosenSongs[currentChallengeIndex!].spotifyId]
@@ -439,6 +449,8 @@ class Match: @unchecked Sendable {
 
             let deletionAmount = Int(ceil(Double(excerptVerses.count) / Double(3)))
             self.lyricsOriginalVerses[spotifyId] = excerptVerses
+            print("    -> Verses are \(excerptVerses.joined(separator: " ||| "))")
+            print("    -> Deletion amount is \(deletionAmount)")
 
             if (excerptVerses.count == 2) {
                 let deletableVerseIndex = (0..<1).randomElement()!
@@ -450,16 +462,8 @@ class Match: @unchecked Sendable {
                 continue
             }
 
-            // Delete verses!
-            switch ExcerptSection.random() {
-                // case ExcerptSection.BEGGINING:
-                //     var idx = 0
-                //     while (idx < deletionAmount) {
-                //         excerptVerses[idx] = "lyChal_\(excerptVerses[idx].count)"
-                //         idx += 1
-                //     }
-                //     lyricalChallenges[spotifyId] = excerptVerses
 
+            switch ExcerptSection.random() {
                 case ExcerptSection.MIDDLE:
                     var idx = deletionAmount - 1
                     while (idx < (deletionAmount - 1) + deletionAmount && idx < excerptVerses.count) {
@@ -476,7 +480,7 @@ class Match: @unchecked Sendable {
                     }
                     lyricalChallenges[spotifyId] = excerptVerses
 
-                default: print("???")
+                default: print("Unkown deletion section, won't do a thing!")
             }
         }
     }

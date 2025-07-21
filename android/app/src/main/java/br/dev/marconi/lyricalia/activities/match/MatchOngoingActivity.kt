@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.LayerDrawable
 import android.inputmethodservice.InputMethodService
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
@@ -104,6 +105,7 @@ class MatchOngoingActivity: AppCompatActivity() {
             MatchMessages.RECEIVABLE_CHALLENGE -> processChallengeActionable(messageParts)
             MatchMessages.RECEIVABLE_COUNTDOWN -> processCountdown(messageParts[2])
             MatchMessages.RECEIVABLE_PODIUM -> showPodium(messageParts[2])
+            MatchMessages.RECEIVABLE_FINAL_PODIUM -> goToFinalPodium(messageParts[2])
             MatchMessages.RECEIVABLE_SUBMITTED -> processSubmitted(messageParts[2])
             MatchMessages.RECEIVABLE_READY -> {
                 updateLoadingHint("VAMOS LÁ!")
@@ -116,6 +118,10 @@ class MatchOngoingActivity: AppCompatActivity() {
             }
             else -> { toastUnknownMessage("1 " + messageParts.joinToString("$")) }
         }
+    }
+
+    private fun goToFinalPodium(jsonifiedPodium: String) {
+        NavigationUtils.navigateToMatchPodium(this, jsonifiedPodium)
     }
 
     private fun saveChallengeAnswer(jsonifiedAnswer: String) {
@@ -147,6 +153,8 @@ class MatchOngoingActivity: AppCompatActivity() {
             .setDuration(100)
             .start()
         playerIndicatorInstance.findViewById<ImageView>(R.id.playerCheckmark).alpha = 1f
+
+        MediaPlayer.create(applicationContext, R.raw.tick).start()
     }
 
     private fun processChallengeActionable(messageParts: List<String>) {

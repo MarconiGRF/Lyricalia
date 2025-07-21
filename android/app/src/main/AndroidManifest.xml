@@ -54,7 +54,9 @@
             android:exported="true"/>
         <activity
             android:name=".activities.match.MatchOngoingActivity"
-            android:windowSoftInputMode="adjustPan"
+            android:exported="true"/>
+        <activity
+            android:name=".activities.match.MatchPodiumActivity"
             android:exported="true"/>
     </application>
 
