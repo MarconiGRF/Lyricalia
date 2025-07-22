@@ -1,30 +1,49 @@
 package br.dev.marconi.lyricalia.activities.match
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.animation.doOnEnd
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.activities.MatchPlayers
+import br.dev.marconi.lyricalia.activities.MenuActivity
 import br.dev.marconi.lyricalia.databinding.ActivityMatchPodiumBinding
 import br.dev.marconi.lyricalia.repositories.match.PlayerFinalPodium
 import br.dev.marconi.lyricalia.utils.NavigationUtils
+import br.dev.marconi.lyricalia.utils.StorageUtils
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.Position
+import nl.dionsegijn.konfetti.core.emitter.Emitter
+import nl.dionsegijn.konfetti.core.models.Shape
+import nl.dionsegijn.konfetti.core.models.Size
+import nl.dionsegijn.konfetti.xml.image.DrawableImage
+import java.util.concurrent.TimeUnit
 
 class MatchPodiumActivity: AppCompatActivity() {
     private lateinit var binding: ActivityMatchPodiumBinding
     private lateinit var matchPlayers: MatchPlayers
     private var podiumIndicatorIds: MutableList<Int> = mutableListOf()
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,10 +70,10 @@ class MatchPodiumActivity: AppCompatActivity() {
             object : TypeToken<List<PlayerFinalPodium>>() {}.type
         )
 
-        binding.backButton.setOnClickListener { animatePodium(podiumList, podiumList.size - 1) }
+        binding.backButton.setOnClickListener { NavigationUtils.navigateToMenu(this) }
 
         buildPodium(podiumList)
-//        animatePodium(podiumList, podiumList.size - 1)
+        animatePodium(podiumList, podiumList.size - 1)
     }
 
     private fun buildPodium(podiumList: List<PlayerFinalPodium>) {
@@ -68,22 +87,21 @@ class MatchPodiumActivity: AppCompatActivity() {
                 it.text =  matchPlayers.players[
                     matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)
                 ].username.toString()
+                it.textSize = 12.fromDpToPx().toFloat()
                 it.alpha = 0f
             }
             podiumIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer).also {
                 it.setColorFilter(matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][1])
                 it.translationX = -1000f
-//                it.scaleX = 0f
             }
             podiumIndicatorInstance.findViewById<View>(R.id.stick).also {
                 it.setBackgroundColor(matchPlayers.colors[matchPlayers.players.map{ it.id }.indexOf(podiumInfo.id)][1])
                 it.translationX = -1000f
-//                it.scaleX = 0f
             }
             podiumIndicatorInstance.findViewById<TextView>(R.id.playerScore).also {
                 it.text = "0"
+                it.textSize = 12.fromDpToPx().toFloat()
                 it.translationX = -1000f
-//                it.scaleX = 0f
             }
 
             binding.mainContent.addView(podiumIndicatorInstance)
@@ -91,12 +109,31 @@ class MatchPodiumActivity: AppCompatActivity() {
     }
 
     private fun animatePodium(podiumList: List<PlayerFinalPodium>, idx: Int) {
-        if (idx < 0) { return }
+        if (idx < 0) {
+            val currentUser = StorageUtils(filesDir).retrieveUser()!!
+
+            if (currentUser.id == podiumList[0].id) makeAParty()
+            binding.brandingBackground
+                .animate()
+                .alpha(0.45f)
+                .setListener(
+                    object : AnimatorListenerAdapter() { override fun onAnimationEnd(animation: Animator) {
+                        binding.backButton.animate().alpha(1f).setDuration(1000).start()
+                    }}
+                )
+                .setDuration(4000)
+                .start()
+
+            return
+        }
 
         lifecycleScope.launch {
             val podiumIndicatorInstance = binding.mainContent.findViewById<ConstraintLayout>(podiumIndicatorIds[idx])
+
+            playSong(R.raw.drums)
             podiumIndicatorInstance.findViewById<ImageView>(R.id.playerGlyphContainer)
                 .animate()
+                .setInterpolator(AccelerateDecelerateInterpolator())
                 .translationX(
                     (idx * -(60.fromDpToPx())).toFloat()
                 )
@@ -104,6 +141,7 @@ class MatchPodiumActivity: AppCompatActivity() {
                 .start()
             podiumIndicatorInstance.findViewById<View>(R.id.stick)
                 .animate()
+                .setInterpolator(AccelerateDecelerateInterpolator())
                 .translationX(
                     (idx * -(60.fromDpToPx())).toFloat()
                 )
@@ -112,6 +150,7 @@ class MatchPodiumActivity: AppCompatActivity() {
 
             val scoreView = podiumIndicatorInstance.findViewById<TextView>(R.id.playerScore)
             scoreView.animate()
+                .setInterpolator(AccelerateDecelerateInterpolator())
                 .translationX(
                     (idx * -(60.fromDpToPx())).toFloat()
                 )
@@ -122,15 +161,90 @@ class MatchPodiumActivity: AppCompatActivity() {
                 .apply {
                     duration = 2000
                     addUpdateListener { animator ->  scoreView.text = animator.animatedValue.toString() }
+                    doOnEnd {
+                        podiumIndicatorInstance.findViewById<TextView>(R.id.playerUsername).animate().alpha(1f).setDuration(500).start()
+                        playSong(R.raw.plates)
+
+                        lifecycleScope.launch {
+                            delay(1000)
+                            animatePodium(podiumList, idx - 1)
+                        }
+                    }
                     start()
                 }
             scoreView.alpha = 1f
-
-            podiumIndicatorInstance.findViewById<TextView>(R.id.playerUsername).animate().alpha(1f).setDuration(2000).start()
-
-            animatePodium(podiumList, idx - 1)
         }
     }
 
     private fun Int.fromDpToPx() = (this * resources.displayMetrics.density).toInt()
+
+    private fun makeAParty() {
+        playSong(R.raw.trumpets)
+
+        binding.run {
+            konfettiLeft.start(
+                party = Party(
+                    angle = 55,
+                    shapes = listOf(
+                        Shape.Circle,
+                        Shape.Square,
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_a)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_apostrophe)!!, 8, 19)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_c)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_l)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_r)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_y)!!, 17, 22))
+                    ),
+                    size = listOf(Size.LARGE, Size(15, mass = 6f)),
+                    position = Position.Relative(0.0, 0.0),
+                    timeToLive = 3200,
+                    colors = listOf(0x61e786, 0x5a5766, 0x9792e3, 0xE86161),
+                    emitter = Emitter(duration = 18, TimeUnit.SECONDS).perSecond(40)
+                )
+            )
+            konfettiRight.start(
+                party = Party(
+                    angle = 145,
+                    shapes = listOf(
+                        Shape.Circle,
+                        Shape.Square,
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_a)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_apostrophe)!!, 8, 19)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_c)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_l)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_r)!!, 18, 22)),
+                        Shape.DrawableShape(DrawableImage(ContextCompat.getDrawable(this@MatchPodiumActivity ,R.drawable.just_y)!!, 17, 22))
+                    ),
+                    size = listOf(Size.LARGE, Size(15, mass = 6f)),
+                    position = Position.Relative(1.0, 0.0),
+                    timeToLive = 3200,
+                    colors = listOf(0x61e786, 0x5a5766, 0x9792e3, 0xE86161),
+                    emitter = Emitter(duration = 18, TimeUnit.SECONDS).perSecond(40)
+                )
+            )
+        }
+    }
+
+    private fun playSong(resId: Int) {
+        mediaPlayer?.let { player ->
+            if (player.isPlaying) {
+                player.stop()
+            }
+
+            player.reset()
+
+            val afd = resources.openRawResourceFd(resId)
+            player.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            player.prepare() // or prepareAsync()
+            player.start()
+
+        } ?: run {
+            mediaPlayer = MediaPlayer().apply {
+                val afd = resources.openRawResourceFd(resId)
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                prepare()
+                start()
+            }
+        }
+    }
 }

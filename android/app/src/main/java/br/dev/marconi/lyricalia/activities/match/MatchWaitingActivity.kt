@@ -76,10 +76,10 @@ class MatchWaitingActivity: AppCompatActivity() {
 
         playerColors = arrayOf(
             Pair(resources.getColor(R.color.lyWhite, theme), resources.getColor(R.color.lyIndigo, theme)),
-            Pair(resources.getColor(R.color.lyWhite, theme), resources.getColor(R.color.lyDarkerGray, theme)),
-            Pair(resources.getColor(R.color.lyDarkerGray, theme), resources.getColor(R.color.lyGreen, theme)),
             Pair(resources.getColor(R.color.lyGreen, theme), resources.getColor(R.color.lyGray, theme)),
-            Pair(resources.getColor(R.color.lyIndigo, theme), resources.getColor(R.color.lyDarkerGray, theme))
+            Pair(resources.getColor(R.color.lyDarkerGray, theme), resources.getColor(R.color.lyGreen, theme)),
+            Pair(resources.getColor(R.color.lyIndigo, theme), resources.getColor(R.color.lyDarkerGray, theme)),
+            Pair(resources.getColor(R.color.lyWhite, theme), resources.getColor(R.color.lyDarkerGray, theme))
         )
 
         otherPlayersLayout = binding.otherPlayers

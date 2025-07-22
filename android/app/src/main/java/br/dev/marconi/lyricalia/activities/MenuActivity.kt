@@ -2,6 +2,7 @@ package br.dev.marconi.lyricalia.activities
 
 import android.animation.ValueAnimator
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableString
@@ -14,10 +15,12 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import br.dev.marconi.lyricalia.R
 import br.dev.marconi.lyricalia.databinding.ActivityMenuBinding
 import br.dev.marconi.lyricalia.repositories.spotify.library.SpotifyLibraryWebSocket
 import br.dev.marconi.lyricalia.utils.NavigationUtils
@@ -26,6 +29,15 @@ import br.dev.marconi.lyricalia.viewModels.MenuViewModel
 import br.dev.marconi.lyricalia.viewModels.MenuViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import nl.dionsegijn.konfetti.core.Party
+import nl.dionsegijn.konfetti.core.Position
+import nl.dionsegijn.konfetti.core.emitter.Emitter
+import nl.dionsegijn.konfetti.core.models.CoreImage
+import nl.dionsegijn.konfetti.core.models.ReferenceImage
+import nl.dionsegijn.konfetti.core.models.Shape
+import nl.dionsegijn.konfetti.core.models.Size
+import nl.dionsegijn.konfetti.xml.image.DrawableImage
+import java.util.concurrent.TimeUnit
 import kotlin.Float
 
 class MenuActivity : AppCompatActivity() {

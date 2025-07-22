@@ -14,6 +14,15 @@
         tools:context=".activities.match.MatchJoinActivity"
         android:clipToPadding="false">
 
+        <nl.dionsegijn.konfetti.xml.KonfettiView
+            android:id="@+id/konfettiLeft"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <nl.dionsegijn.konfetti.xml.KonfettiView
+            android:id="@+id/konfettiRight"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
         <TextView
             android:id="@+id/podiumTitle"
             android:layout_width="wrap_content"
@@ -37,9 +46,22 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/podiumTitle"
             app:layout_constraintVertical_bias="0"
-            android:paddingVertical="20dp"
+            android:paddingTop="40dp"
             android:orientation="vertical">
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/brandingBackground"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:translationX="-390dp"
+            android:translationY="300dp"
+            android:layout_width="1100dp"
+            android:layout_height="1000dp"
+            android:src="@drawable/lyircon_foreground"
+            android:alpha="0"
+            android:rotation="-20"
+            />
 
         <Button
             android:id="@+id/backButton"
@@ -47,6 +69,7 @@
             android:layout_width="wrap_content"
             android:minHeight="50dp"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="50dp"
             android:text="@string/back_to_menu"
             android:fontFamily="@font/domine"
             android:textStyle="bold"
@@ -54,7 +77,8 @@
             android:backgroundTint="@color/lyGreen"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:alpha="0"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
