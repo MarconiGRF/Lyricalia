@@ -2,10 +2,7 @@
 # Lyricalia 🎶
 A lyrics-based game between your friends!
 
-# Demo 🕹️
 https://github.com/user-attachments/assets/83e9c52e-f322-4e3e-b57e-5638a06f0801
-
-
 
 ## Game modes 🎮
 - Complete the lyrics
