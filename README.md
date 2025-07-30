@@ -2,6 +2,11 @@
 # Lyricalia 🎶
 A lyrics-based game between your friends!
 
+# Demo 🕹️
+https://github.com/user-attachments/assets/83e9c52e-f322-4e3e-b57e-5638a06f0801
+
+
+
 ## Game modes 🎮
 - Complete the lyrics
     - Using commonly saved songs between the players, randomly picks songs and their lyrics, giving the players lyrics sections to be completed, the player that guesses the lyrics closer to the original ones wins more points!
